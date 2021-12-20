@@ -25,6 +25,15 @@ def query_groups(query):
     return _run_query(query)
 
 
+def query_users(query):
+
+    if not query.get("fq"):
+        query["fq"] = []
+    query["fq"].append("entity_type:user")
+
+    return _run_query(query)
+
+
 def _run_query(query):
 
     q = query.get("q")

@@ -26,6 +26,7 @@ class SitesearchPlugin(plugins.SingletonPlugin):
         return {
             "organization_search": action.organization_search,
             "group_search": action.group_search,
+            "user_search": action.user_search,
         }
 
     # IAuthFunctions
@@ -34,6 +35,7 @@ class SitesearchPlugin(plugins.SingletonPlugin):
         return {
             "organization_search": auth.organization_search,
             "group_search": auth.group_search,
+            "user_search": auth.user_search,
         }
 
     # IClick

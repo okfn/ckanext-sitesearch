@@ -7,7 +7,7 @@ from sqlalchemy.sql.expression import true, false
 from ckan import model
 from ckan.plugins import toolkit
 
-from ckanext.sitesearch.lib.index import index_organization, index_group
+from ckanext.sitesearch.lib.index import index_organization, index_group, index_user
 
 log = logging.getLogger(__name__)
 
@@ -31,6 +31,8 @@ def rebuild(entity_type):
         _rebuild_orgs()
     elif entity_type in ("groups", "group"):
         _rebuild_groups()
+    elif entity_type in ("users", "user"):
+        _rebuild_users()
     else:
         toolkit.error_shout("Unknown entity type: {}".format(entity_type))
 
@@ -65,9 +67,24 @@ def _rebuild_groups():
     _rebuild_entities(group_ids, "group", "group_show", defer_commit)
 
 
+def _rebuild_users():
+    # TODO:
+    defer_commit = False
+
+    user_ids = [
+        r[0]
+        for r in model.Session.query(model.User.id)
+        .filter(model.User.state != "deleted")
+        .all()
+    ]
+
+    _rebuild_entities(user_ids, "user", "user_show", defer_commit)
+
+
 indexers = {
     "organization": index_organization,
     "group": index_group,
+    "user": index_user,
 }
 
 

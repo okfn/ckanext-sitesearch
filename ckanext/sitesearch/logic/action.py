@@ -10,6 +10,7 @@ from ckanext.sitesearch.lib import query
 queriers = {
     "organization": query.query_organizations,
     "group": query.query_groups,
+    "user": query.query_users,
 }
 
 
@@ -39,6 +40,27 @@ def _group_or_org_search(entity_name, context, data_dict):
     if not data_dict.get("sort"):
         data_dict["sort"] = "title asc"
 
+    return _perform_search(entity_name, context, data_dict)
+
+
+@toolkit.side_effect_free
+def user_search(context, data_dict):
+
+    toolkit.check_access("user_search", context, data_dict)
+
+    schema = context.get("schema") or default_search_schema()
+
+    data_dict, errors = toolkit.navl_validate(data_dict, schema, context)
+    if errors:
+        raise toolkit.ValidationError(errors)
+
+    if not data_dict.get("sort"):
+        data_dict["sort"] = "fullname asc, name asc"
+
+    return _perform_search("user", context, data_dict)
+
+
+def _perform_search(entity_name, context, data_dict):
     result = queriers[entity_name](data_dict)
 
     validated_results = []

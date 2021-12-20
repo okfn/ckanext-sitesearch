@@ -54,6 +54,27 @@ def index_organization(data_dict, defer_commit=DEFAULT_DEFER_COMMIT_VALUE):
     return _index_group_or_org(data_dict, defer_commit)
 
 
+def index_user(data_dict, defer_commit=DEFAULT_DEFER_COMMIT_VALUE):
+
+    if not data_dict:
+        return
+
+    data_dict = _check_mandatory_fields(data_dict)
+
+    data_dict["entity_type"] = "user"
+
+    # Make sure we don't index this
+    data_dict.pop('apikey', None)
+
+    # Store full dict
+    data_dict["validated_data_dict"] = json.dumps(data_dict, cls=MissingNullEncoder)
+
+    # Created date
+    data_dict["metadata_created"] = data_dict["created"]
+
+    return _send_to_solr(data_dict, defer_commit)
+
+
 def _index_group_or_org(data_dict, defer_commit):
 
     data_dict = _check_mandatory_fields(data_dict)
@@ -91,7 +112,11 @@ def _index_group_or_org(data_dict, defer_commit):
 
     # No permission labels, all group and org metadata is public
 
-    # Send to Solr:
+    return _send_to_solr(data_dict, defer_commit)
+
+
+def _send_to_solr(data_dict, defer_commit):
+
     commit = not defer_commit
     try:
         conn = make_connection()
