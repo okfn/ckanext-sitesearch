@@ -86,7 +86,8 @@ def _index_group_or_org(data_dict, defer_commit):
             data_dict[key] = value
     data_dict.pop("extras", None)
 
-    # TODO: created date
+    # Created date
+    data_dict["metadata_created"] = data_dict["created"]
 
     # No permission labels, all group and org metadata is public
 

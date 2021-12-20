@@ -7,7 +7,6 @@ import ckanext.sitesearch.logic.action as action
 import ckanext.sitesearch.logic.auth as auth
 
 
-
 class SitesearchPlugin(plugins.SingletonPlugin):
 
     plugins.implements(plugins.IActions)
@@ -25,14 +24,16 @@ class SitesearchPlugin(plugins.SingletonPlugin):
 
     def get_actions(self):
         return {
-            'organization_search': action.organization_search,
+            "organization_search": action.organization_search,
+            "group_search": action.group_search,
         }
 
     # IAuthFunctions
 
     def get_auth_functions(self):
         return {
-            'organization_search': auth.organization_search,
+            "organization_search": auth.organization_search,
+            "group_search": auth.group_search,
         }
 
     # IClick

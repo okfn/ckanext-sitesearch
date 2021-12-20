@@ -2,11 +2,12 @@ import sys
 import logging
 
 import click
+from sqlalchemy.sql.expression import true, false
 
 from ckan import model
 from ckan.plugins import toolkit
 
-from ckanext.sitesearch.lib.index import index_organization
+from ckanext.sitesearch.lib.index import index_organization, index_group
 
 log = logging.getLogger(__name__)
 
@@ -28,8 +29,10 @@ def rebuild(entity_type):
 
     if entity_type in ("orgs", "org", "organizations", "organisations"):
         _rebuild_orgs()
+    elif entity_type in ("groups", "group"):
+        _rebuild_groups()
     else:
-        click.abort("Unknown entity type: {}".format(entity_type))
+        toolkit.error_shout("Unknown entity type: {}".format(entity_type))
 
 
 def _rebuild_orgs():
@@ -39,21 +42,49 @@ def _rebuild_orgs():
     org_ids = [
         r[0]
         for r in model.Session.query(model.Group.id)
-        .filter(model.Group.is_organization == True)
+        .filter(model.Group.is_organization == true())
         .filter(model.Group.state != "deleted")
         .all()
     ]
 
-    total_orgs = len(org_ids)
+    _rebuild_entities(org_ids, "organization", "organization_show", defer_commit)
+
+
+def _rebuild_groups():
+    # TODO:
+    defer_commit = False
+
+    group_ids = [
+        r[0]
+        for r in model.Session.query(model.Group.id)
+        .filter(model.Group.is_organization == false())
+        .filter(model.Group.state != "deleted")
+        .all()
+    ]
+
+    _rebuild_entities(group_ids, "group", "group_show", defer_commit)
+
+
+indexers = {
+    "organization": index_organization,
+    "group": index_group,
+}
+
+
+def _rebuild_entities(entity_ids, entity_name, action_name, defer_commit):
+
+    total_entities = len(entity_ids)
     context = {"ignore_auth": True}
-    for counter, org_id in enumerate(org_ids):
+    for counter, entity_id in enumerate(entity_ids):
         sys.stdout.write(
-            "\rIndexing organization {0}/{1}".format(counter + 1, total_orgs)
+            "\rIndexing {} {}/{}".format(entity_name, counter + 1, total_entities)
         )
         sys.stdout.flush()
         try:
-            data_dict = toolkit.get_action("organization_show")(context, {"id": org_id})
-            index_organization(data_dict, defer_commit)
+            data_dict = toolkit.get_action(action_name)(context, {"id": entity_id})
+            indexers[entity_name](data_dict, defer_commit)
         except Exception as e:
-            log.error(u"Error while indexing organizaiton %s: %s" % (org_id, repr(e)))
+            log.error(
+                "Error while indexing {} {}: {}".format(entity_name, entity_id, repr(e))
+            )
             raise

@@ -16,6 +16,15 @@ def query_organizations(query):
     return _run_query(query)
 
 
+def query_groups(query):
+
+    if not query.get("fq"):
+        query["fq"] = []
+    query["fq"].append("entity_type:group")
+
+    return _run_query(query)
+
+
 def _run_query(query):
 
     q = query.get("q")
@@ -27,6 +36,8 @@ def _run_query(query):
             raise SearchError("Local parameters are not supported.")
     except KeyError:
         pass
+
+    query.setdefault("wt", "json")
 
     query.setdefault("df", "text")
     query.setdefault("q.op", "AND")
