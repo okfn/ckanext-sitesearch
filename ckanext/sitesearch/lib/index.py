@@ -64,7 +64,7 @@ def index_user(data_dict, defer_commit=DEFAULT_DEFER_COMMIT_VALUE):
     data_dict["entity_type"] = "user"
 
     # Make sure we don't index this
-    data_dict.pop('apikey', None)
+    data_dict.pop("apikey", None)
 
     # Store full dict
     data_dict["validated_data_dict"] = json.dumps(data_dict, cls=MissingNullEncoder)
@@ -137,10 +137,11 @@ def _send_to_solr(data_dict, defer_commit):
     )
 
 
-def commit(self):
+def commit():
     try:
         conn = make_connection()
         conn.commit(waitSearcher=False)
+        log.debug("Commited changes on the Solr index")
     except Exception as e:
         log.exception(e)
         raise SearchIndexError(e)
