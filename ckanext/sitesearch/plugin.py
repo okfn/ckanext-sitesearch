@@ -23,20 +23,28 @@ class SitesearchPlugin(plugins.SingletonPlugin):
     # IActions
 
     def get_actions(self):
-        return {
+        actions = {
             "organization_search": action.organization_search,
             "group_search": action.group_search,
             "user_search": action.user_search,
         }
+        if plugins.plugin_loaded("pages"):
+            actions["pages_search"] = action.pages_search
+
+        return actions
 
     # IAuthFunctions
 
     def get_auth_functions(self):
-        return {
+        auth_functions = {
             "organization_search": auth.organization_search,
             "group_search": auth.group_search,
             "user_search": auth.user_search,
         }
+        if plugins.plugin_loaded("pages"):
+            auth_functions["pages_search"] = auth.pages_search
+
+        return auth_functions
 
     # IClick
 

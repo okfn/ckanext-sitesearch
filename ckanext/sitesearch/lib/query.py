@@ -37,7 +37,19 @@ def query_users(query):
     return _run_query(query)
 
 
-def _run_query(query):
+def query_pages(query, permission_labels=None):
+
+    if not query.get("fq_list"):
+        query["fq_list"] = []
+    query["fq_list"].append("entity_type:page")
+
+    if not permission_labels:
+        permission_labels = ["public"]
+
+    return _run_query(query, permission_labels=permission_labels)
+
+
+def _run_query(query, permission_labels=None):
 
     # Check that query keys are valid
     if not set(query.keys()) <= VALID_SOLR_PARAMETERS:
@@ -52,14 +64,20 @@ def _run_query(query):
         raise SearchError("Local parameters are not supported.")
 
     fq = []
-    if 'fq' in query:
-        fq.append(query['fq'])
-    fq.extend(query.get('fq_list', []))
+    if "fq" in query:
+        fq.append(query["fq"])
+    fq.extend(query.get("fq_list", []))
 
     # Show only results from this CKAN instance
-    fq.append('+site_id:{}'.format(solr_literal(toolkit.config.get('ckan.site_id'))))
+    fq.append("+site_id:{}".format(solr_literal(toolkit.config.get("ckan.site_id"))))
 
-    query['fq'] = fq
+    if permission_labels is not None:
+        fq.append(
+            "+permission_labels:(%s)"
+            % " OR ".join(solr_literal(p) for p in permission_labels)
+        )
+
+    query["fq"] = fq
 
     query.setdefault("wt", "json")
 
@@ -67,7 +85,7 @@ def _run_query(query):
     query.setdefault("q.op", "AND")
 
     conn = make_connection(decode_dates=False)
-    log.debug("Package query: %r" % query)
+    log.debug("Sent Solr query: {}".format(query))
     try:
         solr_response = conn.search(**query)
     except SolrError as e:

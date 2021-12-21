@@ -6,14 +6,18 @@ import click
 from sqlalchemy.sql.expression import true, false
 
 from ckan import model
-from ckan.plugins import toolkit
+from ckan.plugins import toolkit, plugin_loaded
 
 from ckanext.sitesearch.lib.index import (
     index_organization,
     index_group,
     index_user,
+    index_page,
     commit,
 )
+
+if plugin_loaded("pages"):
+    from ckanext.pages.db import Page
 
 log = logging.getLogger(__name__)
 
@@ -57,6 +61,10 @@ def rebuild(entity_type, commit_each, force, quiet, entity_id=None):
         _rebuild_groups(defer_commit, force, quiet, entity_id)
     elif entity_type in ("users", "user"):
         _rebuild_users(defer_commit, force, quiet, entity_id)
+    elif entity_type in ("pages", "page"):
+        if not plugin_loaded("pages"):
+            raise RuntimeError("The `pages` plugin needs to be enabled")
+        _rebuild_pages(defer_commit, force, quiet, entity_id)
     else:
         toolkit.error_shout("Unknown entity type: {}".format(entity_type))
 
@@ -117,14 +125,40 @@ def _rebuild_users(defer_commit, force, quiet, entity_id):
     _rebuild_entities(user_ids, "user", "user_show", defer_commit, force, quiet)
 
 
+def _rebuild_pages(defer_commit, force, quiet, entity_id):
+
+    if entity_id:
+
+        page = Page.get(name=entity_id)
+        if not page:
+            raise click.UsageError("Page not found: {}".format(entity_id))
+        page_ids = [page.name]
+    else:
+        pages = Page.pages()
+        page_ids = [r.name for r in pages]
+
+    _rebuild_entities(
+        page_ids,
+        "page",
+        "ckanext_pages_show",
+        defer_commit,
+        force,
+        quiet,
+        id_field="page",
+    )
+
+
 indexers = {
     "organization": index_organization,
     "group": index_group,
     "user": index_user,
+    "page": index_page,
 }
 
 
-def _rebuild_entities(entity_ids, entity_name, action_name, defer_commit, force, quiet):
+def _rebuild_entities(
+    entity_ids, entity_name, action_name, defer_commit, force, quiet, id_field="id"
+):
 
     total_entities = len(entity_ids)
     context = {"ignore_auth": True}
@@ -135,7 +169,7 @@ def _rebuild_entities(entity_ids, entity_name, action_name, defer_commit, force,
             )
             sys.stdout.flush()
         try:
-            data_dict = toolkit.get_action(action_name)(context, {"id": entity_id})
+            data_dict = toolkit.get_action(action_name)(context, {id_field: entity_id})
             indexers[entity_name](data_dict, defer_commit)
         except Exception as e:
             log.error(

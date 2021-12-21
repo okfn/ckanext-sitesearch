@@ -7,11 +7,14 @@ from pysolr import SolrError
 import six
 from six import text_type
 
-from ckan.plugins import toolkit
+from ckan.plugins import toolkit, plugin_loaded
 
 from ckan.lib.search.common import SearchIndexError, make_connection
 from ckan.lib.search.index import RESERVED_FIELDS, KEY_CHARS
 from ckan.lib.navl.dictization_functions import MissingNullEncoder
+
+if plugin_loaded("pages"):
+    from ckanext.pages.db import Page
 
 
 DEFAULT_DEFER_COMMIT_VALUE = not toolkit.config.get("ckan.search.solr_commit", True)
@@ -71,6 +74,51 @@ def index_user(data_dict, defer_commit=DEFAULT_DEFER_COMMIT_VALUE):
 
     # Created date
     data_dict["metadata_created"] = data_dict["created"]
+
+    return _send_to_solr(data_dict, defer_commit)
+
+
+def index_page(data_dict, defer_commit=DEFAULT_DEFER_COMMIT_VALUE):
+
+    if not data_dict:
+        return
+
+    if not plugin_loaded("pages"):
+        raise RuntimeError("The `pages` plugin needs to be enabled")
+
+    data_dict = _check_mandatory_fields(data_dict)
+
+    data_dict["entity_type"] = "page"
+
+    # Store full dict
+    data_dict["validated_data_dict"] = json.dumps(data_dict, cls=MissingNullEncoder)
+
+    # Created and modified dates
+    # Note that publish_date will also be indexed as date
+    data_dict["metadata_created"] = data_dict["created"]
+    data_dict["metadata_modified"] = data_dict["modified"]
+
+    # Index content in the notes field so it gets copied to the catch-all text field
+    data_dict['notes'] = data_dict['content']
+
+    # Permissions
+    # The intent is to mimic ckanext-pages behaviour:
+    # * If not org_id and private=True -> sysadmins only
+    # * If org_id and private=True -> org/groups admins and sysadmins only
+    # * All other cases -> public
+    # See ckanext-pages auth.py module
+    labels = []
+    page = Page.get(name=data_dict["name"], group_id=data_dict.get("group_id"))
+    if not page:
+        raise toolkit.ObjectNotFound("Page not found: {}".format(data_dict["name"]))
+    if page.private:
+        labels.append("sysadmin")
+        if page.group_id:
+            labels.append("group_id-{}".format(page.group_id))
+    else:
+        labels.append("public")
+
+    data_dict["permission_labels"] = labels
 
     return _send_to_solr(data_dict, defer_commit)
 
