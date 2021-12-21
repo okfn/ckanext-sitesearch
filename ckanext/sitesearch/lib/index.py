@@ -142,6 +142,84 @@ def commit():
         conn = make_connection()
         conn.commit(waitSearcher=False)
         log.debug("Commited changes on the Solr index")
-    except Exception as e:
+    except SolrError as e:
+        log.exception(e)
+        raise SearchIndexError(e)
+
+
+def delete_group(id, defer_commit=DEFAULT_DEFER_COMMIT_VALUE):
+    return _delete("group", id, defer_commit)
+
+
+def delete_organization(id, defer_commit=DEFAULT_DEFER_COMMIT_VALUE):
+    return _delete("organization", id, defer_commit)
+
+
+def delete_user(id, defer_commit=DEFAULT_DEFER_COMMIT_VALUE):
+    return _delete("user", id, defer_commit)
+
+
+def _delete(entity_type, entity_id, defer_commit):
+
+    commit = not defer_commit
+
+    query = []
+    query.append("+entity_type:{}".format(entity_type))
+
+    query.append(
+        '+(id:"{entity_id}" OR name:"{entity_id}")'.format(entity_id=entity_id)
+    )
+    query.append('+site_id:"{}"'.format(toolkit.config.get("ckan.site_id")))
+
+    query = " AND ".join(query)
+    try:
+        conn = make_connection()
+        conn.delete(q=query, commit=commit)
+        log.debug("Deleted {} {} the Solr index".format(entity_type, entity_id))
+    except SolrError as e:
+        log.exception(e)
+        raise SearchIndexError(e)
+
+
+def clear_organizations(defer_commit=DEFAULT_DEFER_COMMIT_VALUE):
+    _clear(entity_type="organization", defer_commit=defer_commit)
+    log.debug("Deleted all organizations from the Solr index")
+
+
+def clear_groups(defer_commit=DEFAULT_DEFER_COMMIT_VALUE):
+    _clear(entity_type="group", defer_commit=defer_commit)
+    log.debug("Deleted all groups from the Solr index")
+
+
+def clear_users(defer_commit=DEFAULT_DEFER_COMMIT_VALUE):
+    _clear(entity_type="user", defer_commit=defer_commit)
+    log.debug("Deleted all users from the Solr index")
+
+
+def clear_all(defer_commit=DEFAULT_DEFER_COMMIT_VALUE):
+    _clear(keep_datasets=False, defer_commit=defer_commit)
+    log.debug("Deleted all entities from the Solr index")
+
+
+def _clear(
+    entity_type=None, keep_datasets=True, defer_commit=DEFAULT_DEFER_COMMIT_VALUE
+):
+    commit = not defer_commit
+
+    query = []
+
+    if entity_type:
+        query.append("+entity_type:{}".format(entity_type))
+
+    if keep_datasets:
+        query.append("-entity_type:package")
+
+    query.append("+site_id:{}".format(toolkit.config.get("ckan.site_id")))
+
+    query = " AND ".join(query)
+    try:
+        conn = make_connection()
+        conn.delete(q=query, commit=commit)
+    except SolrError as e:
         log.exception(e)
         raise SearchIndexError(e)
