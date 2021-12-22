@@ -39,7 +39,7 @@ class SitesearchPlugin(plugins.SingletonPlugin):
             "user_delete": chained_action.user_delete,
         }
         if plugins.plugin_loaded("pages"):
-            actions["pages_search"] = action.pages_search
+            actions["page_search"] = action.page_search
             actions["ckanext_pages_update"] = chained_action.pages_update
             actions["ckanext_pages_delete"] = chained_action.pages_delete
 
@@ -54,7 +54,7 @@ class SitesearchPlugin(plugins.SingletonPlugin):
             "user_search": auth.user_search,
         }
         if plugins.plugin_loaded("pages"):
-            auth_functions["pages_search"] = auth.pages_search
+            auth_functions["page_search"] = auth.page_search
 
         return auth_functions
 

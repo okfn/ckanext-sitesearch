@@ -62,7 +62,7 @@ def user_search(context, data_dict):
 
 
 @toolkit.side_effect_free
-def pages_search(context, data_dict):
+def page_search(context, data_dict):
 
     toolkit.check_access("pages_search", context, data_dict)
 
