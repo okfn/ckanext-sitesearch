@@ -4,6 +4,7 @@ import ckan.plugins.toolkit as toolkit
 
 from ckanext.sitesearch.cli import get_commands
 import ckanext.sitesearch.logic.action as action
+import ckanext.sitesearch.logic.chained_action as chained_action
 import ckanext.sitesearch.logic.auth as auth
 
 
@@ -27,9 +28,20 @@ class SitesearchPlugin(plugins.SingletonPlugin):
             "organization_search": action.organization_search,
             "group_search": action.group_search,
             "user_search": action.user_search,
+            "organization_create": chained_action.organization_create,
+            "organization_update": chained_action.organization_update,
+            "organization_delete": chained_action.organization_delete,
+            "group_create": chained_action.group_create,
+            "group_update": chained_action.group_update,
+            "group_delete": chained_action.group_delete,
+            "user_create": chained_action.user_create,
+            "user_update": chained_action.user_update,
+            "user_delete": chained_action.user_delete,
         }
         if plugins.plugin_loaded("pages"):
             actions["pages_search"] = action.pages_search
+            actions["ckanext_pages_update"] = chained_action.pages_update
+            actions["ckanext_pages_delete"] = chained_action.pages_delete
 
         return actions
 
