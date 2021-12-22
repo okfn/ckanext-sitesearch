@@ -15,7 +15,7 @@ This extension requires CKAN 2.9 or higher and Python 3
 ckanext-sitesearch allows Solr-powered searches on the following CKAN entities:
 
 | Entity | Action | Permissions | Notes |
-| --- | --- | --- | --- | --- |
+| --- | --- | --- | --- |
 | Organizations | `organization_search` | Public | |
 | Groups        | `group_search`        | Public | |
 | Users         | `user_search`         | Sysadmins only | |
