@@ -28,6 +28,7 @@ class SitesearchPlugin(plugins.SingletonPlugin):
             "organization_search": action.organization_search,
             "group_search": action.group_search,
             "user_search": action.user_search,
+            "site_search": action.site_search,
             "organization_create": chained_action.organization_create,
             "organization_update": chained_action.organization_update,
             "organization_delete": chained_action.organization_delete,
@@ -52,6 +53,7 @@ class SitesearchPlugin(plugins.SingletonPlugin):
             "organization_search": auth.organization_search,
             "group_search": auth.group_search,
             "user_search": auth.user_search,
+            "site_search": auth.site_search,
         }
         if plugins.plugin_loaded("pages"):
             auth_functions["page_search"] = auth.page_search

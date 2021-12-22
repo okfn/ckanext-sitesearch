@@ -19,3 +19,12 @@ def page_search(context, data_dict):
     Note that as in datasets, permission labels apply to limit the results returned
     """
     return {"success": True}
+
+
+def site_search(context, data_dict):
+    """All users can search across all entities
+
+    Note that for each individual entity an additonal auth check will be done, eg
+    if the user is not allowed to search users, they won't get any users results
+    """
+    return {"success": True}

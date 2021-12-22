@@ -1,7 +1,6 @@
 import json
 
-from ckan.plugins import toolkit
-
+from ckan.plugins import toolkit, plugin_loaded
 
 from ckanext.sitesearch.logic.schema import default_search_schema
 from ckanext.sitesearch.lib import query
@@ -64,7 +63,7 @@ def user_search(context, data_dict):
 @toolkit.side_effect_free
 def page_search(context, data_dict):
 
-    toolkit.check_access("pages_search", context, data_dict)
+    toolkit.check_access("page_search", context, data_dict)
 
     schema = context.get("schema") or default_search_schema()
 
@@ -80,6 +79,30 @@ def page_search(context, data_dict):
     return _perform_search(
         "page", context, data_dict, permission_labels=permission_labels
     )
+
+
+@toolkit.side_effect_free
+def site_search(context, data_dict):
+
+    toolkit.check_access("site_search", context, data_dict)
+
+    out = {}
+    searches = [
+        ("datasets", "package_search"),
+        ("organization", "organization_search"),
+        ("group", "group_search"),
+        ("user", "user_search"),
+        ("page", "page_search"),
+    ]
+    for search in searches:
+        name, action_name = search
+        try:
+            toolkit.check_access(action_name, context, data_dict)
+            out[name] = toolkit.get_action(action_name)(context, data_dict)
+        except toolkit.NotAuthorized:
+            pass
+
+    return out
 
 
 def _perform_search(entity_name, context, data_dict, permission_labels=None):

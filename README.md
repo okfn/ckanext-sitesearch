@@ -37,6 +37,22 @@ In all actions, the output matches the one of `package_search` as well, an objec
 
 ```
 
+Additionally the plugin registers a `site_search` action that performs a search across all entities that the user is allowed to, including datasets. Results are returned in an object including the keys for which the user has permission to search on. For instance for a sysadmin user that has access to all searches:
+
+```
+{
+    "datasets": <results>,
+    "organizations": <results>,
+    "groups": <results>,
+    "users": <results>,
+    "pages": <results>
+}
+```
+
+For each item, the results object is the one described above (`count` and `results` keys).
+
+Note that all parameters are passed unchanged to each of the search actions, so this site-wide search is mostly useful for free-text searches like `q=flood`.
+
 ### CLI
 
 The plugin inlcudes a `ckan` command to reindex the current entities in the database in Solr:
