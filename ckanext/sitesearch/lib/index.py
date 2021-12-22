@@ -16,6 +16,8 @@ from ckan.lib.navl.dictization_functions import MissingNullEncoder
 if plugin_loaded("pages"):
     from ckanext.pages.db import Page
 
+from ckanext.sitesearch.lib.utils import strip_html_tags
+
 
 DEFAULT_DEFER_COMMIT_VALUE = not toolkit.config.get("ckan.search.solr_commit", True)
 
@@ -98,8 +100,9 @@ def index_page(data_dict, defer_commit=DEFAULT_DEFER_COMMIT_VALUE):
     data_dict["metadata_created"] = data_dict["created"]
     data_dict["metadata_modified"] = data_dict["modified"]
 
-    # Index content in the notes field so it gets copied to the catch-all text field
-    data_dict['notes'] = data_dict['content']
+    # Index content (minus HTML tags) in the notes field so it gets copied to
+    # the catch-all `text` field
+    data_dict['notes'] = strip_html_tags(data_dict['content'])
 
     # Permissions
     # The intent is to mimic ckanext-pages behaviour:
