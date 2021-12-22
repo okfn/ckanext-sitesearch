@@ -4,8 +4,6 @@ import json
 import socket
 
 from pysolr import SolrError
-import six
-from six import text_type
 
 from ckan.plugins import toolkit, plugin_loaded
 
@@ -33,7 +31,7 @@ def _check_mandatory_fields(data_dict):
 
     data_dict["site_id"] = site_id
     data_dict["index_id"] = hashlib.md5(
-        six.b("%s%s" % (data_dict["id"], site_id))
+        "{}{}".format(data_dict["id"], site_id).encode()
     ).hexdigest()
 
     return data_dict
@@ -102,7 +100,7 @@ def index_page(data_dict, defer_commit=DEFAULT_DEFER_COMMIT_VALUE):
 
     # Index content (minus HTML tags) in the notes field so it gets copied to
     # the catch-all `text` field
-    data_dict['notes'] = strip_html_tags(data_dict['content'])
+    data_dict["notes"] = strip_html_tags(data_dict["content"])
 
     # Permissions
     # The intent is to mimic ckanext-pages behaviour:
