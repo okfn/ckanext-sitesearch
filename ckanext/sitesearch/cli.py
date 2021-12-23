@@ -85,7 +85,9 @@ def _rebuild_orgs(defer_commit, force, quiet, entity_id):
             .all()
         ]
 
-    _rebuild_entities(org_ids, "organization", "organization_show", defer_commit, force)
+    _rebuild_entities(
+        org_ids, "organization", "organization_show", defer_commit, force, quiet
+    )
 
 
 def _rebuild_groups(defer_commit, force, quiet, entity_id):
@@ -104,7 +106,7 @@ def _rebuild_groups(defer_commit, force, quiet, entity_id):
             .all()
         ]
 
-    _rebuild_entities(group_ids, "group", "group_show", defer_commit, force)
+    _rebuild_entities(group_ids, "group", "group_show", defer_commit, force, quiet)
 
 
 def _rebuild_users(defer_commit, force, quiet, entity_id):
