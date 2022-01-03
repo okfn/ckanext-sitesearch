@@ -7,6 +7,7 @@ jobs:
       matrix:
         ckan-version: [2.9]
         solr-image: [2.9, 2.9-solr8]
+      fail-fast: false
     container:
       # TODO: Switch to 2.9 when 2.9.5 is released
       image: openknowledge/ckan-dev:2.9.5
