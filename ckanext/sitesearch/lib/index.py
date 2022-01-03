@@ -37,6 +37,13 @@ def _check_mandatory_fields(data_dict):
     return data_dict
 
 
+def _format_date(value):
+    # Solr 6 is picky with dates, wants a Z character at the end of ISO dates
+    if not value[:-1] == "Z":
+        value = value + "Z"
+    return value
+
+
 def index_group(data_dict, defer_commit=DEFAULT_DEFER_COMMIT_VALUE):
 
     if not data_dict:
@@ -73,7 +80,7 @@ def index_user(data_dict, defer_commit=DEFAULT_DEFER_COMMIT_VALUE):
     data_dict["validated_data_dict"] = json.dumps(data_dict, cls=MissingNullEncoder)
 
     # Created date
-    data_dict["metadata_created"] = data_dict["created"]
+    data_dict["metadata_created"] = _format_date(data_dict["created"])
 
     return _send_to_solr(data_dict, defer_commit)
 
@@ -95,8 +102,8 @@ def index_page(data_dict, defer_commit=DEFAULT_DEFER_COMMIT_VALUE):
 
     # Created and modified dates
     # Note that publish_date will also be indexed as date
-    data_dict["metadata_created"] = data_dict["created"]
-    data_dict["metadata_modified"] = data_dict["modified"]
+    data_dict["metadata_created"] = _format_date(data_dict["created"])
+    data_dict["metadata_modified"] = _format_date(data_dict["modified"])
 
     # Index content (minus HTML tags) in the notes field so it gets copied to
     # the catch-all `text` field
@@ -157,7 +164,7 @@ def _index_group_or_org(data_dict, defer_commit):
     data_dict.pop("extras", None)
 
     # Created date
-    data_dict["metadata_created"] = data_dict["created"]
+    data_dict["metadata_created"] = _format_date(data_dict["created"])
 
     # No permission labels, all group and org metadata is public
 
