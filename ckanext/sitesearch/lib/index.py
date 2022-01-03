@@ -76,6 +76,15 @@ def index_user(data_dict, defer_commit=DEFAULT_DEFER_COMMIT_VALUE):
     # Make sure we don't index this
     data_dict.pop("apikey", None)
 
+    # Store fields in the notes field so it gets added to the default field
+    data_dict["notes"] = " ".join(
+        [
+            data_dict.get("fullname", ""),
+            data_dict.get("about", ""),
+            data_dict.get("email", ""),
+        ]
+    )
+
     # Store full dict
     data_dict["validated_data_dict"] = json.dumps(data_dict, cls=MissingNullEncoder)
 
@@ -143,6 +152,9 @@ def _index_group_or_org(data_dict, defer_commit):
     # Store full dict
     data_dict["validated_data_dict"] = json.dumps(data_dict, cls=MissingNullEncoder)
 
+    # Store description in the notes field so it gets added to the default field
+    data_dict["notes"] = data_dict["description"]
+
     # Add string title field for sorting
     data_dict["title_string"] = data_dict.get("title")
 
@@ -156,7 +168,7 @@ def _index_group_or_org(data_dict, defer_commit):
     for extra in extras:
         key, value = extra["key"], extra["value"]
         if isinstance(value, (tuple, list)):
-            value = " ".join(map(text_type, value))
+            value = " ".join(value)
         key = "".join([c for c in key if c in KEY_CHARS])
         data_dict["extras_" + key] = value
         if key not in index_fields:
