@@ -5,11 +5,11 @@ jobs:
     runs-on: ubuntu-latest
     strategy:
       matrix:
-        # TODO: Switch to 2.9 when 2.9.5 is released
-        ckan-version: [2.9.5]
+        ckan-version: [2.9]
         solr-image: [2.9, 2.9-solr8]
     container:
-      image: openknowledge/ckan-dev:${{ matrix.ckan-version }}
+      # TODO: Switch to 2.9 when 2.9.5 is released
+      image: openknowledge/ckan-dev:2.9.5
     services:
       solr:
         image: ckan/ckan-solr:${{ matrix.solr-image }}
