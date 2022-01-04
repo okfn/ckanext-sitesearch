@@ -48,4 +48,7 @@ jobs:
         ckan -c test.ini db init
     - name: Run tests
       run: pytest --ckan-ini=test.ini --cov=ckanext.sitesearch --disable-warnings ckanext/sitesearch
-
+    - name: Upload coverage report to codecov
+      uses: codecov/codecov-action@v1
+      with:
+        file: ./coverage.xml
