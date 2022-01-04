@@ -1,2 +1,2 @@
--e git+https://github.com/ckan/ckanext-pages.git
+-e git+https://github.com/ckan/ckanext-pages.git#egg=ckanext-pages
 pytest-ckan
