@@ -80,6 +80,8 @@ def user_update(up_func, context, data_dict):
 
     index.index_user(data_dict)
 
+    return data_dict
+
 
 @toolkit.chained_action
 def user_delete(up_func, context, data_dict):

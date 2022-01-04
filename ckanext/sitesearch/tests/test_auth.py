@@ -36,8 +36,6 @@ def test_auth_site_search():
     assert toolkit.check_access("site_search", context)
 
 
-@pytest.mark.usefixtures("with_plugins")
-@pytest.mark.ckan_config("ckan.plugins", "sitesearch pages")
 def test_auth_page_search():
     """All users can search pages (permission labels apply on private pages)"""
     context = {"user": ""}

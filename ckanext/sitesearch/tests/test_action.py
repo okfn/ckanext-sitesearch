@@ -15,15 +15,7 @@ call_action = helpers.call_action
 
 @pytest.fixture
 def pages_setup():
-    if db.pages_table is None:
-        db.init_db()
-
-
-@pytest.fixture
-def clean_pages():
-    if db.pages_table is not None:
-        model.Session.query(db.Page).delete()
-        model.Session.commit()
+    db.init_db()
 
 
 class TestGroupOrOrgSearch(object):
@@ -147,8 +139,7 @@ class TestGroupOrOrgSearch(object):
         ][0] == "pear"
 
 
-@pytest.mark.usefixtures("with_plugins")
-@pytest.mark.ckan_config("ckan.plugins", "sitesearch")
+@pytest.mark.usefixtures("pages_setup")
 class TestUserSearch(object):
     @classmethod
     def setup_class(cls):
@@ -237,8 +228,7 @@ class TestUserSearch(object):
         assert result["results"][0]["fullname"] == "My user 2"
 
 
-@pytest.mark.usefixtures("with_plugins", "pages_setup")
-@pytest.mark.ckan_config("ckan.plugins", "sitesearch pages")
+@pytest.mark.usefixtures("pages_setup")
 class TestPageSearch(object):
     @classmethod
     def _create_pages(cls):
@@ -404,8 +394,7 @@ class TestPageSearch(object):
         assert result["results"][0]["title"] == "My page 1"
 
 
-@pytest.mark.usefixtures("with_plugins", "pages_setup", "clean_db", "clean_index")
-@pytest.mark.ckan_config("ckan.plugins", "sitesearch pages")
+@pytest.mark.usefixtures("pages_setup", "clean_db", "clean_index")
 class TestSiteSearch(object):
     def setup(self):
 
