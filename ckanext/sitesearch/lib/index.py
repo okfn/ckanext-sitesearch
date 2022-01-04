@@ -11,9 +11,6 @@ from ckan.lib.search.common import SearchIndexError, make_connection
 from ckan.lib.search.index import RESERVED_FIELDS, KEY_CHARS
 from ckan.lib.navl.dictization_functions import MissingNullEncoder
 
-if plugin_loaded("pages"):
-    from ckanext.pages.db import Page
-
 from ckanext.sitesearch.lib.utils import strip_html_tags
 
 
@@ -76,7 +73,7 @@ def index_user(data_dict, defer_commit=DEFAULT_DEFER_COMMIT_VALUE):
     # Make sure we don't index this
     data_dict.pop("apikey", None)
 
-    # Store fields in the notes field so it gets added to the default field
+    # Store fields in the notes field so they get added to the default field
     data_dict["notes"] = " ".join(
         [
             data_dict.get("fullname", ""),
@@ -113,6 +110,8 @@ def index_page(data_dict, defer_commit=DEFAULT_DEFER_COMMIT_VALUE):
     # Note that publish_date will also be indexed as date
     data_dict["metadata_created"] = _format_date(data_dict["created"])
     data_dict["metadata_modified"] = _format_date(data_dict["modified"])
+    if data_dict.get("publish_date"):
+        data_dict["publish_date"] = _format_date(data_dict["publish_date"])
 
     # Index content (minus HTML tags) in the notes field so it gets copied to
     # the catch-all `text` field
@@ -124,6 +123,8 @@ def index_page(data_dict, defer_commit=DEFAULT_DEFER_COMMIT_VALUE):
     # * If org_id and private=True -> org/groups admins and sysadmins only
     # * All other cases -> public
     # See ckanext-pages auth.py module
+    from ckanext.pages.db import Page
+
     labels = []
     page = Page.get(name=data_dict["name"], group_id=data_dict.get("group_id"))
     if not page:
