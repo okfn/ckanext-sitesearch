@@ -1,6 +1,11 @@
 
 # ckanext-sitesearch
 
+
+[![Tests](https://github.com/okfn/ckanext-sitesearch/workflows/Tests/badge.svg?branch=main)](https://github.com/okfn/ckanext-sitesearch/actions)
+[![Code Coverage](http://codecov.io/github/okfn/ckanext-sitesearch/coverage.svg?branch=main)](http://codecov.io/github/okfn/ckanext-sitesearch?branch=main)
+
+
 Index different CKAN entities in Solr, not just datasets
 
 ## Requirements
@@ -101,6 +106,7 @@ do:
 
     git clone https://github.com/okfn/ckanext-sitesearch.git
     cd ckanext-sitesearch
+    pip install -r dev-requirements.txt
     python setup.py develop
 
 

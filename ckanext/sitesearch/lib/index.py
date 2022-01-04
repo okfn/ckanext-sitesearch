@@ -11,9 +11,6 @@ from ckan.lib.search.common import SearchIndexError, make_connection
 from ckan.lib.search.index import RESERVED_FIELDS, KEY_CHARS
 from ckan.lib.navl.dictization_functions import MissingNullEncoder
 
-if plugin_loaded("pages"):
-    from ckanext.pages.db import Page
-
 from ckanext.sitesearch.lib.utils import strip_html_tags
 
 
@@ -35,6 +32,13 @@ def _check_mandatory_fields(data_dict):
     ).hexdigest()
 
     return data_dict
+
+
+def _format_date(value):
+    # Solr 6 is picky with dates, wants a Z character at the end of ISO dates
+    if not value[:-1] == "Z":
+        value = value + "Z"
+    return value
 
 
 def index_group(data_dict, defer_commit=DEFAULT_DEFER_COMMIT_VALUE):
@@ -69,11 +73,20 @@ def index_user(data_dict, defer_commit=DEFAULT_DEFER_COMMIT_VALUE):
     # Make sure we don't index this
     data_dict.pop("apikey", None)
 
+    # Store fields in the notes field so they get added to the default field
+    data_dict["notes"] = " ".join(
+        [
+            data_dict.get("fullname", ""),
+            data_dict.get("about", ""),
+            data_dict.get("email", ""),
+        ]
+    )
+
     # Store full dict
     data_dict["validated_data_dict"] = json.dumps(data_dict, cls=MissingNullEncoder)
 
     # Created date
-    data_dict["metadata_created"] = data_dict["created"]
+    data_dict["metadata_created"] = _format_date(data_dict["created"])
 
     return _send_to_solr(data_dict, defer_commit)
 
@@ -95,8 +108,10 @@ def index_page(data_dict, defer_commit=DEFAULT_DEFER_COMMIT_VALUE):
 
     # Created and modified dates
     # Note that publish_date will also be indexed as date
-    data_dict["metadata_created"] = data_dict["created"]
-    data_dict["metadata_modified"] = data_dict["modified"]
+    data_dict["metadata_created"] = _format_date(data_dict["created"])
+    data_dict["metadata_modified"] = _format_date(data_dict["modified"])
+    if data_dict.get("publish_date"):
+        data_dict["publish_date"] = _format_date(data_dict["publish_date"])
 
     # Index content (minus HTML tags) in the notes field so it gets copied to
     # the catch-all `text` field
@@ -108,6 +123,8 @@ def index_page(data_dict, defer_commit=DEFAULT_DEFER_COMMIT_VALUE):
     # * If org_id and private=True -> org/groups admins and sysadmins only
     # * All other cases -> public
     # See ckanext-pages auth.py module
+    from ckanext.pages.db import Page
+
     labels = []
     page = Page.get(name=data_dict["name"], group_id=data_dict.get("group_id"))
     if not page:
@@ -136,6 +153,9 @@ def _index_group_or_org(data_dict, defer_commit):
     # Store full dict
     data_dict["validated_data_dict"] = json.dumps(data_dict, cls=MissingNullEncoder)
 
+    # Store description in the notes field so it gets added to the default field
+    data_dict["notes"] = data_dict["description"]
+
     # Add string title field for sorting
     data_dict["title_string"] = data_dict.get("title")
 
@@ -149,7 +169,7 @@ def _index_group_or_org(data_dict, defer_commit):
     for extra in extras:
         key, value = extra["key"], extra["value"]
         if isinstance(value, (tuple, list)):
-            value = " ".join(map(text_type, value))
+            value = " ".join(value)
         key = "".join([c for c in key if c in KEY_CHARS])
         data_dict["extras_" + key] = value
         if key not in index_fields:
@@ -157,7 +177,7 @@ def _index_group_or_org(data_dict, defer_commit):
     data_dict.pop("extras", None)
 
     # Created date
-    data_dict["metadata_created"] = data_dict["created"]
+    data_dict["metadata_created"] = _format_date(data_dict["created"])
 
     # No permission labels, all group and org metadata is public
 
