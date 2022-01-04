@@ -7,6 +7,7 @@ from ckan.plugins import toolkit
 from ckan.lib.search import SearchQueryError, clear_all as reset_index
 from ckan.tests import factories, helpers
 
+from ckanext.sitesearch.lib.index import index_page
 from ckanext.pages import db
 
 call_action = helpers.call_action
@@ -251,8 +252,6 @@ class TestPageSearch(object):
                 context, {"page": page_name}
             )
             if page:
-                from ckanext.sitesearch.lib.index import index_page
-
                 index_page(page)
         if page:
             # Pages already exist

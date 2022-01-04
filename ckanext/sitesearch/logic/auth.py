@@ -1,8 +1,13 @@
+from ckan.plugins import toolkit
+
+
+@toolkit.auth_allow_anonymous_access
 def organization_search(context, data_dict):
     """All users can search organizations"""
     return {"success": True}
 
 
+@toolkit.auth_allow_anonymous_access
 def group_search(context, data_dict):
     """All users can search groups"""
     return {"success": True}
@@ -13,6 +18,7 @@ def user_search(context, data_dict):
     return {"success": False}
 
 
+@toolkit.auth_allow_anonymous_access
 def page_search(context, data_dict):
     """All users can search pages
 
@@ -21,6 +27,7 @@ def page_search(context, data_dict):
     return {"success": True}
 
 
+@toolkit.auth_allow_anonymous_access
 def site_search(context, data_dict):
     """All users can search across all entities
 

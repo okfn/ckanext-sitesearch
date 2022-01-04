@@ -1,6 +1,6 @@
 import json
 
-from ckan.plugins import toolkit
+from ckan.plugins import toolkit, plugin_loaded
 
 from ckanext.sitesearch.logic.schema import default_search_schema
 from ckanext.sitesearch.lib import query
@@ -93,8 +93,9 @@ def site_search(context, data_dict):
         ("organizations", "organization_search"),
         ("groups", "group_search"),
         ("users", "user_search"),
-        ("pages", "page_search"),
     ]
+    if plugin_loaded("pages"):
+        searches.append(("pages", "page_search"))
     for search in searches:
         name, action_name = search
         try:
@@ -108,8 +109,8 @@ def site_search(context, data_dict):
 
 def _perform_search(entity_name, context, data_dict, permission_labels=None):
 
-    data_dict.update(data_dict.get('__extras', {}))
-    data_dict.pop('__extras', None)
+    data_dict.update(data_dict.get("__extras", {}))
+    data_dict.pop("__extras", None)
 
     if permission_labels:
         result = queriers[entity_name](data_dict, permission_labels)
