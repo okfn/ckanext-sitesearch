@@ -76,9 +76,9 @@ def index_user(data_dict, defer_commit=DEFAULT_DEFER_COMMIT_VALUE):
     # Store fields in the notes field so they get added to the default field
     data_dict["notes"] = " ".join(
         [
-            data_dict.get("fullname", ""),
-            data_dict.get("about", ""),
-            data_dict.get("email", ""),
+            data_dict.get("fullname", "") or "",
+            data_dict.get("about", "") or "",
+            data_dict.get("email", "") or "",
         ]
     )
 
