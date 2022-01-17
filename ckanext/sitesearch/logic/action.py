@@ -1,5 +1,6 @@
 import json
 
+from ckan import model
 from ckan.plugins import toolkit, plugin_loaded
 
 from ckanext.sitesearch.logic.schema import default_search_schema
@@ -75,7 +76,7 @@ def page_search(context, data_dict):
     if not data_dict.get("sort"):
         data_dict["sort"] = "publish_date desc, metadata_modified desc"
 
-    permission_labels = _get_user_page_labels(context["auth_user_obj"])
+    permission_labels = _get_user_page_labels(context["user"])
 
     return _perform_search(
         "page", context, data_dict, permission_labels=permission_labels
@@ -127,7 +128,9 @@ def _perform_search(entity_name, context, data_dict, permission_labels=None):
     }
 
 
-def _get_user_page_labels(user_obj):
+def _get_user_page_labels(user_id):
+
+    user_obj = model.User.get(user_id)
 
     labels = ["public"]
 
