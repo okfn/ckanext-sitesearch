@@ -14,6 +14,7 @@ class SitesearchPlugin(plugins.SingletonPlugin):
     plugins.implements(plugins.IAuthFunctions)
     plugins.implements(plugins.IConfigurer)
     plugins.implements(plugins.IClick)
+    plugins.implements(plugins.IPackageController, inherit=True)
 
     # IConfigurer
 
@@ -65,3 +66,21 @@ class SitesearchPlugin(plugins.SingletonPlugin):
     def get_commands(self):
 
         return get_commands()
+
+    # IPackageController
+
+    def before_search(self, search_dict):
+        return self._before_dataset_search(search_dict)
+
+    def before_dataset_search(self, search_dict):
+        return self._before_dataset_search(search_dict)
+
+    def _before_dataset_search(self, search_dict):
+        """Ensure we are only returning datasets"""
+
+        if "fq_list" not in search_dict:
+            search_dict["fq_list"] = []
+
+        search_dict["fq_list"].append("+entity_type:package")
+
+        return search_dict

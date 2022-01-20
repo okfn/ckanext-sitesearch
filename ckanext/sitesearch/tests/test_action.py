@@ -491,3 +491,29 @@ class TestSiteSearch(object):
         result = call_action("site_search", context=context)
 
         assert "users" not in result
+
+
+@pytest.mark.usefixtures("clean_db", "clean_index")
+class TestPackageSearch(object):
+
+    @pytest.mark.ckan_config('ckan.auth.create_unowned_dataset', True)
+    def test_package_search_returns_only_datasets(self):
+
+        factories.User()
+
+        factories.Group()
+
+        factories.Dataset()
+        factories.Dataset()
+        factories.Dataset(type="custom_dataset")
+
+        context = {
+            'ignore_auth': False
+        }
+
+        result = toolkit.get_action("package_search")(context, {})
+
+        assert result["count"] == 3
+
+        for item in result["results"]:
+            assert item["type"] in ("dataset", "custom_dataset")

@@ -46,6 +46,8 @@ setup(
         [ckan.plugins]
         sitesearch=ckanext.sitesearch.plugin:SitesearchPlugin
 
+        test_dataset_type=ckanext.sitesearch.tests.test_blueprints:CustomDatasetType
+
         [babel.extractors]
         ckan = ckan.lib.extract:extract_ckan
     """,
