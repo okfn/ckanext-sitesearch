@@ -5,6 +5,7 @@ from ckan.plugins import toolkit, plugin_loaded
 
 from ckanext.sitesearch.logic.schema import default_search_schema
 from ckanext.sitesearch.lib import query
+from ckanext.sitesearch.model import SearchTerm
 
 
 queriers = {
@@ -108,10 +109,20 @@ def site_search(context, data_dict):
     return out
 
 
+def _log_search_term(search_term, entity_type):
+    '''Logs the search term to the database.
+    '''
+    model.Session.add(SearchTerm(term=search_term, entity_type=entity_type))
+    model.Session.commit()
+
+
+
 def _perform_search(entity_name, context, data_dict, permission_labels=None):
 
     data_dict.update(data_dict.get("__extras", {}))
     data_dict.pop("__extras", None)
+
+    _log_search_term(data_dict.get("q"), entity_name)
 
     if permission_labels:
         result = queriers[entity_name](data_dict, permission_labels)

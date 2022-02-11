@@ -8,6 +8,7 @@ from sqlalchemy.sql.expression import true, false
 from ckan import model
 from ckan.plugins import toolkit, plugin_loaded
 
+from ckanext.sitesearch.model import tables_exist, create_tables
 from ckanext.sitesearch.lib.index import (
     index_organization,
     index_group,
@@ -185,3 +186,14 @@ def _rebuild_entities(
 
     if defer_commit:
         commit()
+
+
+@sitesearch.command()
+def initdb():
+    """Creates the necessary tables in the database."""
+    if tables_exist():
+        click.echo("The tables already exist. Doing nothing.")
+        return
+
+    create_tables()
+    click.echo("Tables created.")
