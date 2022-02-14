@@ -73,6 +73,12 @@ Check the command help for additional options:
 
     ckan sitesearch rebuild --help
 
+### Logging search terms
+
+The plugin includes a feature to log in the database all the search term for analytics purposes. For each search, it will log: term, entity_type, user_id (optional, default false) and timestamp.
+
+`entity_type` can take the values of: `site`, `organization`, `group`, `dataset`, `pages`.
+
 
 ## Installation
 
@@ -93,11 +99,13 @@ To install ckanext-sitesearch:
    config file (by default the config file is located at
    `/etc/ckan/default/ckan.ini`).
 
-4. Restart CKAN
+4. Run `ckan sitesearch initdb` to initialize the database
+
+5. Restart CKAN
 
 ## Config settings
 
-None at present
+`ckanext.sitesearch.log_user_id`: Defaults to `False`. Set it to `True` if you want the ID of the user to be logged in the database. (We do not recommend this setting on public sites.)
 
 ## Developer installation
 

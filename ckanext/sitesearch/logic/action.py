@@ -2,6 +2,7 @@ import json
 
 from ckan import model
 from ckan.plugins import toolkit, plugin_loaded
+from datetime import datetime
 
 from ckanext.sitesearch.logic.schema import default_search_schema
 from ckanext.sitesearch.lib import query
@@ -89,6 +90,9 @@ def site_search(context, data_dict):
 
     toolkit.check_access("site_search", context, data_dict)
 
+    toolkit.g.is_site_search = True
+    _log_search_term(data_dict.get("q"), 'site')
+
     out = {}
     searches = [
         ("datasets", "package_search"),
@@ -112,9 +116,20 @@ def site_search(context, data_dict):
 def _log_search_term(search_term, entity_type):
     '''Logs the search term to the database.
     '''
-    model.Session.add(SearchTerm(term=search_term, entity_type=entity_type))
-    model.Session.commit()
+    user_id = None
+    if toolkit.config.get('ckanext.sitesearch.log_user_id', False):
+        if toolkit.g.userobj:
+            user_id = toolkit.g.userobj.id
 
+    search_term = SearchTerm(
+        term=search_term,
+        entity_type=entity_type,
+        user_id=user_id,
+        search_time=datetime.utcnow()
+        )
+
+    model.Session.add(search_term)
+    model.Session.commit()
 
 
 def _perform_search(entity_name, context, data_dict, permission_labels=None):
@@ -122,7 +137,8 @@ def _perform_search(entity_name, context, data_dict, permission_labels=None):
     data_dict.update(data_dict.get("__extras", {}))
     data_dict.pop("__extras", None)
 
-    _log_search_term(data_dict.get("q"), entity_name)
+    if not toolkit.g.get('is_site_search', False):
+        _log_search_term(data_dict.get("q"), entity_name)
 
     if permission_labels:
         result = queriers[entity_name](data_dict, permission_labels)
