@@ -393,6 +393,24 @@ class TestPageSearch(object):
 
         assert result["results"][0]["title"] == "My page 1"
 
+    def test_page_sort_by_title(self):
+
+        self._create_pages()
+
+        result = call_action("page_search", sort="title_string asc")
+
+        assert [p["title"] for p in result["results"]] == [
+            "My page 1",
+            "My page 2",
+        ]
+
+        result = call_action("page_search", sort="title_string desc")
+
+        assert [p["title"] for p in result["results"]] == [
+            "My page 2",
+            "My page 1",
+        ]
+
 
 @pytest.mark.usefixtures("pages_setup", "clean_db", "clean_index")
 class TestSiteSearch(object):
@@ -495,8 +513,7 @@ class TestSiteSearch(object):
 
 @pytest.mark.usefixtures("clean_db", "clean_index")
 class TestPackageSearch(object):
-
-    @pytest.mark.ckan_config('ckan.auth.create_unowned_dataset', True)
+    @pytest.mark.ckan_config("ckan.auth.create_unowned_dataset", True)
     def test_package_search_returns_only_datasets(self):
 
         factories.User()
@@ -507,9 +524,7 @@ class TestPackageSearch(object):
         factories.Dataset()
         factories.Dataset(type="custom_dataset")
 
-        context = {
-            'ignore_auth': False
-        }
+        context = {"ignore_auth": False}
 
         result = toolkit.get_action("package_search")(context, {})
 
