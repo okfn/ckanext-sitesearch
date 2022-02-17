@@ -1,5 +1,4 @@
 import json
-from re import search
 
 from ckan import model
 from ckan import plugins as p
