@@ -60,25 +60,53 @@ class FakeSiteSearchPlugin(p.SingletonPlugin):
         return search_results
 
 
-def test_interfaces():
+def test_interfaces_entities_search():
     fake_plugin = FakeSiteSearchPlugin()
 
+    assert not fake_plugin.before_organization_search_called
+    assert not fake_plugin.after_organization_search_called
     helpers.call_action('organization_search')
     assert fake_plugin.before_organization_search_called
     assert fake_plugin.after_organization_search_called
 
+    assert not fake_plugin.before_group_search_called
+    assert not fake_plugin.after_group_search_called
     helpers.call_action('group_search')
     assert fake_plugin.before_group_search_called
     assert fake_plugin.after_group_search_called
 
+    assert not fake_plugin.before_user_search_called
+    assert not fake_plugin.after_user_search_called
     helpers.call_action('user_search')
     assert fake_plugin.before_user_search_called
     assert fake_plugin.after_user_search_called
 
+    assert not fake_plugin.before_page_search_called
+    assert not fake_plugin.after_page_search_called
+    helpers.call_action('page_search')
+    assert fake_plugin.before_page_search_called
+    assert fake_plugin.after_page_search_called
+
+
+def test_site_search_interface():
+    fake_plugin = FakeSiteSearchPlugin()
+
+    assert not fake_plugin.before_site_search_called
+    assert not fake_plugin.after_site_search_called
     helpers.call_action('site_search')
     assert fake_plugin.before_site_search_called
     assert fake_plugin.after_site_search_called
 
-    helpers.call_action('page_search')
+
+def test_site_search_calls_other_before_after_search():
+    fake_plugin = FakeSiteSearchPlugin()
+
+    helpers.call_action('site_search')
+    assert fake_plugin.before_organization_search_called
+    assert fake_plugin.after_organization_search_called
+    assert fake_plugin.before_group_search_called
+    assert fake_plugin.after_group_search_called
+    assert fake_plugin.before_user_search_called
+    assert fake_plugin.after_user_search_called
     assert fake_plugin.before_page_search_called
     assert fake_plugin.after_page_search_called
