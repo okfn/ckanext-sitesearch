@@ -11,9 +11,9 @@ class ISiteSearch(Interface):
     For the case of before_* methods, extensions will receive a dictionary with
     the query parameters, and should return a modified (or not) version of it.
 
-    For the case of after_* methods, extensions will receive the search results,
-    as well as the search parameters, and should return a modified (or not)
-    object with the same structure::
+    For the case of after_* methods (except site_search), extensions will
+    receive the search results, as well as the search parameters, and should
+    return a modified (or not) object with the same structure::
 
         {'count': '', 'results': '', 'facets': ''}
 
@@ -30,6 +30,17 @@ class ISiteSearch(Interface):
     def after_site_search(self, search_results, search_params):
         """
         Called after the site search is performed.
+
+        This method has a specific search_results structure since it
+        joins into one dictionary the results of the other searches. The
+        expected structure is::
+            {
+                'datasets': {'count': '', 'results': '', 'facets': ''},
+                'organizations': {'count': '', 'results': '', 'facets': ''},
+                'groups': {'count': '', 'results': '', 'facets': ''},
+                'users': {'count': '', 'results': '', 'facets': ''},
+                'pages': {'count': '', 'results': '', 'facets': ''}
+            }
         """
         return search_results
 
