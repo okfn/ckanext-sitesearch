@@ -1,10 +1,13 @@
 import json
+from re import search
 
 from ckan import model
+from ckan import plugins as p
 from ckan.plugins import toolkit, plugin_loaded
 
 from ckanext.sitesearch.logic.schema import default_search_schema
 from ckanext.sitesearch.lib import query
+from ckanext.sitesearch.interfaces import ISiteSearch
 
 
 queriers = {
@@ -20,7 +23,15 @@ def organization_search(context, data_dict):
 
     toolkit.check_access("organization_search", context, data_dict)
 
-    return _group_or_org_search("organization", context, data_dict)
+    for item in p.PluginImplementations(ISiteSearch):
+        data_dict = item.before_organization_search(data_dict)
+
+    search_results = _group_or_org_search("organization", context, data_dict)
+
+    for item in p.PluginImplementations(ISiteSearch):
+        search_results = item.after_organization_search(search_results, data_dict)
+
+    return search_results
 
 
 @toolkit.side_effect_free
@@ -28,8 +39,15 @@ def group_search(context, data_dict):
 
     toolkit.check_access("group_search", context, data_dict)
 
-    return _group_or_org_search("group", context, data_dict)
+    for item in p.PluginImplementations(ISiteSearch):
+        data_dict = item.before_group_search(data_dict)
 
+    search_results =  _group_or_org_search("group", context, data_dict)
+
+    for item in p.PluginImplementations(ISiteSearch):
+        search_results = item.after_group_search(search_results, data_dict)
+
+    return search_results
 
 def _group_or_org_search(entity_name, context, data_dict):
     schema = context.get("schema") or default_search_schema()
@@ -50,6 +68,9 @@ def user_search(context, data_dict):
 
     toolkit.check_access("user_search", context, data_dict)
 
+    for item in p.PluginImplementations(ISiteSearch):
+        data_dict = item.before_user_search(data_dict)
+
     schema = context.get("schema") or default_search_schema()
 
     data_dict, errors = toolkit.navl_validate(data_dict, schema, context)
@@ -59,13 +80,21 @@ def user_search(context, data_dict):
     if not data_dict.get("sort"):
         data_dict["sort"] = "fullname asc, name asc"
 
-    return _perform_search("user", context, data_dict)
+    search_results =  _perform_search("user", context, data_dict)
+
+    for item in p.PluginImplementations(ISiteSearch):
+        search_results = item.after_user_search(search_results, data_dict)
+
+    return search_results
 
 
 @toolkit.side_effect_free
 def page_search(context, data_dict):
 
     toolkit.check_access("page_search", context, data_dict)
+
+    for item in p.PluginImplementations(ISiteSearch):
+        data_dict = item.before_page_search(data_dict)
 
     schema = context.get("schema") or default_search_schema()
 
@@ -78,15 +107,23 @@ def page_search(context, data_dict):
 
     permission_labels = _get_user_page_labels(context["user"])
 
-    return _perform_search(
+    search_results = _perform_search(
         "page", context, data_dict, permission_labels=permission_labels
     )
+
+    for item in p.PluginImplementations(ISiteSearch):
+        search_results = item.after_page_search(search_results, data_dict)
+
+    return search_results
 
 
 @toolkit.side_effect_free
 def site_search(context, data_dict):
 
     toolkit.check_access("site_search", context, data_dict)
+
+    for item in p.PluginImplementations(ISiteSearch):
+        data_dict = item.before_site_search(data_dict)
 
     out = {}
     searches = [
@@ -104,6 +141,9 @@ def site_search(context, data_dict):
             out[name] = toolkit.get_action(action_name)(context, data_dict)
         except toolkit.NotAuthorized:
             pass
+
+    for item in p.PluginImplementations(ISiteSearch):
+        out = item.after_site_search(out, data_dict)
 
     return out
 
