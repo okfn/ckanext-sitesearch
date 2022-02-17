@@ -1,3 +1,4 @@
+import pytest
 import ckan.plugins as p
 
 from ckan.tests import helpers
@@ -60,9 +61,18 @@ class FakeSiteSearchPlugin(p.SingletonPlugin):
         return search_results
 
 
-def test_interfaces_entities_search():
-    fake_plugin = FakeSiteSearchPlugin()
+@pytest.fixture
+def fake_plugin():
+    ''' Returns a temporary Plugin for testing.
 
+    Since plugins are Singletons, we need to create a temporary child class
+    so attributes are not overriden on each test execution.
+    '''
+    class TempSiteSearchClass(FakeSiteSearchPlugin):
+        pass
+    return TempSiteSearchClass()
+
+def test_interfaces_entities_search(fake_plugin):
     assert not fake_plugin.before_organization_search_called
     assert not fake_plugin.after_organization_search_called
     helpers.call_action('organization_search')
@@ -88,9 +98,7 @@ def test_interfaces_entities_search():
     assert fake_plugin.after_page_search_called
 
 
-def test_site_search_interface():
-    fake_plugin = FakeSiteSearchPlugin()
-
+def test_site_search_interface(fake_plugin):
     assert not fake_plugin.before_site_search_called
     assert not fake_plugin.after_site_search_called
     helpers.call_action('site_search')
@@ -98,9 +106,7 @@ def test_site_search_interface():
     assert fake_plugin.after_site_search_called
 
 
-def test_site_search_calls_other_before_after_search():
-    fake_plugin = FakeSiteSearchPlugin()
-
+def test_site_search_calls_other_before_after_search(fake_plugin):
     helpers.call_action('site_search')
     assert fake_plugin.before_organization_search_called
     assert fake_plugin.after_organization_search_called
