@@ -1,4 +1,5 @@
 import datetime
+from unittest import mock
 
 import pytest
 
@@ -8,6 +9,7 @@ from ckan.lib.search import SearchQueryError, clear_all as reset_index
 from ckan.tests import factories, helpers
 
 from ckanext.sitesearch.lib.index import index_page
+from ckanext.sitesearch.logic.action import parse_search_params
 from ckanext.pages import db
 
 call_action = helpers.call_action
@@ -501,6 +503,33 @@ class TestSiteSearch(object):
         assert result["users"]["count"] == 1
         assert result["pages"]["count"] == 1
 
+    def test_site_search_namespace_params(self):
+
+        with mock.patch("ckanext.sitesearch.logic.action.toolkit.get_action") as ga:
+
+            params = {
+                "q": "behold",
+                "datasets.rows": 5,
+                "pages.fq": "page_type:page",
+            }
+
+            call_action("site_search", **params)
+
+            assert len(ga().call_args_list) == 5
+
+            # package_search
+            assert ga().call_args_list[0][0][1] == {"rows": 5, "q": "behold"}
+
+            # group/organization/user_search
+            for i in (1, 2, 3):
+                assert ga().call_args_list[i][0][1] == {"q": "behold"}
+
+            # pages_search
+            assert ga().call_args_list[4][0][1] == {
+                "fq": "page_type:page",
+                "q": "behold",
+            }
+
     def test_site_search_not_auth(self):
 
         user = factories.User()
@@ -509,6 +538,95 @@ class TestSiteSearch(object):
         result = call_action("site_search", context=context)
 
         assert "users" not in result
+
+
+class TestParseSearchParams(object):
+    def test_parse_params(self):
+
+        data_dict = {
+            "datasets.start": 0,
+            "datasets.rows": 20,
+            "datasets.facet.field": ["tags", "groups"],
+            "groups.facet.field": ["type"],
+            "facet.limit": 10,
+            "q": "test",
+            "fq": "state:active",
+        }
+
+        search_params = parse_search_params(data_dict)
+
+        assert sorted(search_params.keys()) == [
+            "datasets",
+            "groups",
+            "organizations",
+            "users",
+        ]
+
+        assert search_params["datasets"] == {
+            "start": 0,
+            "rows": 20,
+            "facet.field": ["tags", "groups"],
+            "facet.limit": 10,
+            "q": "test",
+            "fq": "state:active",
+        }
+
+        assert search_params["groups"] == {
+            "facet.field": ["type"],
+            "facet.limit": 10,
+            "q": "test",
+            "fq": "state:active",
+        }
+
+        assert (
+            search_params["organizations"]
+            == search_params["users"]
+            == {
+                "q": "test",
+                "facet.limit": 10,
+                "fq": "state:active",
+            }
+        )
+
+    def test_parse_params_overrides(self):
+
+        data_dict = {
+            "datasets.fq": "state:pending",
+            "fq": "state:active",
+        }
+
+        search_params = parse_search_params(data_dict)
+
+        assert search_params["datasets"]["fq"] == "state:pending"
+        for key in ("groups", "organizations", "users"):
+            assert search_params[key]["fq"] == "state:active"
+
+    def test_parse_params_extra_searches(self):
+
+        data_dict = {
+            "datasets.start": 0,
+            "groups.facet.field": ["type"],
+            "news.fq": "type:page",
+            "facet.limit": 10,
+            "q": "test",
+            "fq": "state:active",
+        }
+
+        search_params = parse_search_params(
+            data_dict, searches=["datasets", "groups", "news"]
+        )
+
+        assert sorted(search_params.keys()) == [
+            "datasets",
+            "groups",
+            "news",
+        ]
+
+        assert search_params["news"] == {
+            "fq": "type:page",
+            "facet.limit": 10,
+            "q": "test",
+        }
 
 
 @pytest.mark.usefixtures("clean_db", "clean_index")

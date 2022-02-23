@@ -42,7 +42,9 @@ In all actions, the output matches the one of `package_search` as well, an objec
 
 ```
 
-Additionally the plugin registers a `site_search` action that performs a search across all entities that the user is allowed to, including datasets. Results are returned in an object including the keys for which the user has permission to search on. For instance for a sysadmin user that has access to all searches:
+### Site search
+
+Additionally, the plugin registers a `site_search` action that performs a search across all entities that the user is allowed to, including datasets. Results are returned in an object including the keys for which the user has permission to search on. For instance for a sysadmin user that has access to all searches:
 
 ```
 {
@@ -56,7 +58,50 @@ Additionally the plugin registers a `site_search` action that performs a search 
 
 For each item, the results object is the one described above (`count` and `results` keys).
 
-Note that all parameters are passed unchanged to each of the search actions, so this site-wide search is mostly useful for free-text searches like `q=flood`.
+This action supports namespaced parameters to allow to pass certain search parameters to specific searches. To do, namespace the search param with the key of the relevant search, eg `datasets.limit=20`, `organizations.sort=title desc`, etc. Any non-namespaced parameters will be passed to all searches.
+
+For instance consider the following input parameters for `site_search`:
+
+```
+data_dict = {
+    "datasets.start": 0,
+    "datasets.rows": 20,
+    "datasets.facet.field": ["tags", "groups"],
+    "groups.facet.field": ["type"],
+    "q": "test",
+    "fq": "state:active",
+}
+```
+
+These will be parsed as following, and passed to the relevant search action:
+
+```
+search_params = {
+    "datasets": {
+        "start": 0,
+        "rows": 20,
+        "facet.field": ["tags", "groups"],
+        "q": "test",
+        "fq": "state:active",
+    },
+    "groups": {
+        "facet.field": ["type"],
+        "q": "test",
+        "fq": "state:active",
+    },
+    "organizations": {
+        "q": "test",
+        "fq": "state:active",
+
+    },
+    "users": {
+        "q": "test",
+        "fq": "state:active",
+    },
+}
+```
+
+
 
 ### CLI
 

@@ -83,6 +83,74 @@ def page_search(context, data_dict):
     )
 
 
+def parse_search_params(
+    data_dict, searches=["datasets", "organizations", "groups", "users"]
+):
+    """Support namespaced parameters for specific entity searches
+
+    Transforms the incoming data_dict with the following keys:
+
+        data_dict = {
+            "datasets.start": 0,
+            "datasets.rows": 20,
+            "datasets.facet.field": ["tags", "groups"],
+            "groups.facet.field": ["type"],
+            "q": "test",
+            "fq": "state:active",
+        }
+
+    To the following output, with the relevant parameters for each search:
+
+        search_params = {
+            "datasets": {
+                "start": 0,
+                "rows": 20,
+                "facet.field": ["tags", "groups"],
+                "q": "test",
+                "fq": "state:active",
+            },
+            "groups": {
+                "facet.field": ["type"],
+                "q": "test",
+                "fq": "state:active",
+            },
+            "organizations": {
+                "q": "test",
+                "fq": "state:active",
+
+            },
+            "users": {
+                "q": "test",
+                "fq": "state:active",
+            },
+        }
+
+    Additional searches can be passed with the `searches` paramter. In that case,
+    parameters with that namespace will be parsed too, eg passing `news` would
+    support `news.fq`.
+    """
+
+    out = {s: {} for s in searches}
+
+    common = {}
+
+    for key, value in data_dict.items():
+        search_ns = key.split(".")[0]
+        if search_ns in searches:
+            i = key.index(".") + 1
+            _key = key[i:]
+            out[search_ns][_key] = value
+        else:
+            common[key] = value
+
+    for search in out.keys():
+        for key, value in common.items():
+            if key not in out[search]:
+                out[search][key] = value
+
+    return out
+
+
 @toolkit.side_effect_free
 def site_search(context, data_dict):
 
@@ -95,13 +163,17 @@ def site_search(context, data_dict):
         ("groups", "group_search"),
         ("users", "user_search"),
     ]
+
     if plugin_loaded("pages"):
         searches.append(("pages", "page_search"))
+
+    search_params = parse_search_params(data_dict, searches=[s[0] for s in searches])
+
     for search in searches:
         name, action_name = search
         try:
-            toolkit.check_access(action_name, context, data_dict)
-            out[name] = toolkit.get_action(action_name)(context, data_dict)
+            toolkit.check_access(action_name, context, search_params[name])
+            out[name] = toolkit.get_action(action_name)(context, search_params[name])
         except toolkit.NotAuthorized:
             pass
 
