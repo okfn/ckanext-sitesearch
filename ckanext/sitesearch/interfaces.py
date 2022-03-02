@@ -15,7 +15,7 @@ class ISiteSearch(Interface):
     receive the search results, as well as the search parameters, and should
     return a modified (or not) object with the same structure::
 
-        {'count': '', 'results': '', 'facets': ''}
+        {'count': '', 'results': '', 'search_facets': ''}
 
     Note that count and facets may need to be adjusted if the extension
     changed the results for some reason.
@@ -35,11 +35,11 @@ class ISiteSearch(Interface):
         joins into one dictionary the results of the other searches. The
         expected structure is::
             {
-                'datasets': {'count': '', 'results': '', 'facets': ''},
-                'organizations': {'count': '', 'results': '', 'facets': ''},
-                'groups': {'count': '', 'results': '', 'facets': ''},
-                'users': {'count': '', 'results': '', 'facets': ''},
-                'pages': {'count': '', 'results': '', 'facets': ''}
+                'datasets': {'count': '', 'results': '', 'search_facets': ''},
+                'organizations': {'count': '', 'results': '', 'search_facets': ''},
+                'groups': {'count': '', 'results': '', 'search_facets': ''},
+                'users': {'count': '', 'results': '', 'search_facets': ''},
+                'pages': {'count': '', 'results': '', 'search_facets': ''}
             }
         """
         return search_results
