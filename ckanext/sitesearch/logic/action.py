@@ -194,9 +194,18 @@ def _perform_search(entity_name, context, data_dict, permission_labels=None):
     for doc in result["results"]:
         validated_results.append(json.loads(doc["validated_data_dict"]))
 
+    restructured_facets = {}
+    for key, value in result["facets"].items():
+        restructured_facets[key] = {"title": key, "items": []}
+        for k, v in value.items():
+            restructured_facets[key]["items"].append(
+                {"name": k, "display_name": k, "count": v}
+            )
+
     return {
         "count": result["count"],
         "results": validated_results,
+        "search_facets": restructured_facets,
     }
 
 

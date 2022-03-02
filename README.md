@@ -26,10 +26,10 @@ ckanext-sitesearch allows Solr-powered searches on the following CKAN entities:
 | Users         | `user_search`         | Sysadmins only | |
 | Pages         | `page_search`         | Public (individual page permissions apply) | Requires ckanext-pages |
 
-All `*_search` actions support most of the same paramters that [`package_search`](http://docs.ckan.org/en/latest/api/index.html#ckan.logic.action.get.package_search), except the `facet*` and `include_*` ones. That includes `q`, `fq`, `rows`, `start` and `sort`.
+All `*_search` actions support most of the same paramters that [`package_search`](http://docs.ckan.org/en/latest/api/index.html#ckan.logic.action.get.package_search), except the `include_*` ones. That includes `q`, `fq`, `rows`, `start`, `sort` and all the `facet*` ones.
 
 
-In all actions, the output matches the one of `package_search` as well, an object with a `count` key and a `results` one, wich is a list of the corresponding entities dict (ie the result of `organization_show`, `user_show` etc):
+In all actions, the output matches the one of `package_search` as well, an object with `count`, `results` and `search_facets` keys. `results` is a list of the corresponding entities dict (ie the result of `organization_show`, `user_show` etc):
 
 ```
 {
@@ -37,7 +37,17 @@ In all actions, the output matches the one of `package_search` as well, an objec
     "results": [
         <validated data dict 1>,
         <validated data dict 2>,
-    ]
+    ],
+    "search_facets": {
+        <facet_field_1>: {
+            "items": {
+                "count": 1,
+                "display_name": "example",
+                "name": "example"
+            },
+            "title: "example"
+        }
+    }
 }
 
 ```

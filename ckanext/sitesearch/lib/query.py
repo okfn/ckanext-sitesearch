@@ -92,7 +92,14 @@ def _run_query(query, permission_labels=None):
         raise SearchError(
             "SOLR returned an error running query: %r Error: %r" % (query, e)
         )
+
+    # Covert facets from lists to dicts
+    facets = solr_response.facets.get('facet_fields', {})
+    for field, values in facets.items():
+        facets[field] = dict(zip(values[0::2], values[1::2]))
+
     return {
         "count": solr_response.hits,
         "results": solr_response.docs,
+        "facets": facets,
     }

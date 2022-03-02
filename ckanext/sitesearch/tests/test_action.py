@@ -140,6 +140,26 @@ class TestGroupOrOrgSearch(object):
             if e["key"] == "extra_org_common"
         ][0] == "pear"
 
+    def test_organization_facets(self):
+
+        params = {
+            "facet": "on",
+            "facet.field": ["extra_org_common"],
+        }
+
+        result = call_action("organization_search", **params)
+
+        assert (
+            result["search_facets"]["extra_org_common"]["title"] == "extra_org_common"
+        )
+
+        assert (
+            result["search_facets"]["extra_org_common"]["items"][0]["name"] == "peach"
+        )
+        assert result["search_facets"]["extra_org_common"]["items"][0]["count"] == 1
+        assert result["search_facets"]["extra_org_common"]["items"][1]["name"] == "pear"
+        assert result["search_facets"]["extra_org_common"]["items"][1]["count"] == 1
+
 
 @pytest.mark.usefixtures("pages_setup")
 class TestUserSearch(object):
@@ -228,6 +248,26 @@ class TestUserSearch(object):
         assert len(result["results"]) == 1
 
         assert result["results"][0]["fullname"] == "My user 2"
+
+    def test_user_facets(self):
+
+        params = {
+            "facet": "on",
+            "facet.field": ["email"],
+        }
+
+        result = call_action("user_search", **params)
+
+        assert result["search_facets"]["email"]["title"] == "email"
+
+        assert (
+            result["search_facets"]["email"]["items"][0]["name"] == "user1@example.com"
+        )
+        assert result["search_facets"]["email"]["items"][0]["count"] == 1
+        assert (
+            result["search_facets"]["email"]["items"][1]["name"] == "user2@example.com"
+        )
+        assert result["search_facets"]["email"]["items"][1]["count"] == 1
 
 
 @pytest.mark.usefixtures("pages_setup")
@@ -413,6 +453,29 @@ class TestPageSearch(object):
             "My page 1",
         ]
 
+    def test_page_facets(self):
+
+        sysadmin = factories.Sysadmin()
+        context = {
+            "user": sysadmin["name"],
+            "auth_user_obj": model.User.get(sysadmin["id"]),
+        }
+
+        self._create_pages()
+        params = {
+            "facet": "on",
+            "facet.field": ["private"],
+        }
+
+        result = call_action("page_search", context=context, **params)
+
+        assert result["search_facets"]["private"]["title"] == "private"
+
+        assert result["search_facets"]["private"]["items"][0]["name"] == "false"
+        assert result["search_facets"]["private"]["items"][0]["count"] == 2
+        assert result["search_facets"]["private"]["items"][1]["name"] == "true"
+        assert result["search_facets"]["private"]["items"][1]["count"] == 1
+
 
 @pytest.mark.usefixtures("pages_setup", "clean_db", "clean_index")
 class TestSiteSearch(object):
@@ -448,12 +511,14 @@ class TestSiteSearch(object):
             name="test_dataset_1",
             notes="Behold this great dataset",
             owner_org=self.org1["id"],
+            license_id="cc-by",
         )
 
         self.dataset2 = factories.Dataset(
             name="test_dataset_2",
             notes="Witness this great dataset",
             owner_org=self.org2["id"],
+            license_id="odc-odbl",
         )
 
         self.user1 = factories.User(
@@ -529,6 +594,56 @@ class TestSiteSearch(object):
                 "fq": "page_type:page",
                 "q": "behold",
             }
+
+    def test_site_search_namespace_params_for_facets(self):
+
+        sysadmin = factories.Sysadmin()
+        context = {
+            "user": sysadmin["name"],
+            "auth_user_obj": model.User.get(sysadmin["id"]),
+        }
+
+        params = {
+            "datasets.facet.field": ["license_id"],
+            "users.facet.field": ["email"],
+            "facet": "on",
+            "facet.mincount": 1,
+        }
+
+        result = call_action("site_search", context=context, **params)
+
+        assert (
+            result["datasets"]["search_facets"]["license_id"]["items"][0]["name"]
+            == "odc-odbl"
+        )
+        assert (
+            result["datasets"]["search_facets"]["license_id"]["items"][0]["count"] == 1
+        )
+        assert (
+            result["datasets"]["search_facets"]["license_id"]["items"][1]["name"]
+            == "cc-by"
+        )
+        assert (
+            result["datasets"]["search_facets"]["license_id"]["items"][1]["count"] == 1
+        )
+
+        assert (
+            result["users"]["search_facets"]["email"]["items"][0]["name"]
+            == "user1@example.com"
+        )
+        assert result["users"]["search_facets"]["email"]["items"][0]["count"] == 1
+        assert (
+            result["users"]["search_facets"]["email"]["items"][1]["name"]
+            == "user2@example.com"
+        )
+        assert result["users"]["search_facets"]["email"]["items"][1]["count"] == 1
+
+        assert (
+            result["organizations"]["search_facets"]
+            == result["groups"]["search_facets"]
+            == result["pages"]["search_facets"]
+            == {}
+        )
 
     def test_site_search_not_auth(self):
 
