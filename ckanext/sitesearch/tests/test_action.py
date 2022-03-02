@@ -1,4 +1,5 @@
 import datetime
+from unittest import mock
 
 import pytest
 
@@ -8,6 +9,7 @@ from ckan.lib.search import SearchQueryError, clear_all as reset_index
 from ckan.tests import factories, helpers
 
 from ckanext.sitesearch.lib.index import index_page
+from ckanext.sitesearch.logic.action import parse_search_params
 from ckanext.pages import db
 
 call_action = helpers.call_action
@@ -138,6 +140,26 @@ class TestGroupOrOrgSearch(object):
             if e["key"] == "extra_org_common"
         ][0] == "pear"
 
+    def test_organization_facets(self):
+
+        params = {
+            "facet": "on",
+            "facet.field": ["extra_org_common"],
+        }
+
+        result = call_action("organization_search", **params)
+
+        assert (
+            result["search_facets"]["extra_org_common"]["title"] == "extra_org_common"
+        )
+
+        assert (
+            result["search_facets"]["extra_org_common"]["items"][0]["name"] == "peach"
+        )
+        assert result["search_facets"]["extra_org_common"]["items"][0]["count"] == 1
+        assert result["search_facets"]["extra_org_common"]["items"][1]["name"] == "pear"
+        assert result["search_facets"]["extra_org_common"]["items"][1]["count"] == 1
+
 
 @pytest.mark.usefixtures("pages_setup")
 class TestUserSearch(object):
@@ -226,6 +248,26 @@ class TestUserSearch(object):
         assert len(result["results"]) == 1
 
         assert result["results"][0]["fullname"] == "My user 2"
+
+    def test_user_facets(self):
+
+        params = {
+            "facet": "on",
+            "facet.field": ["email"],
+        }
+
+        result = call_action("user_search", **params)
+
+        assert result["search_facets"]["email"]["title"] == "email"
+
+        assert (
+            result["search_facets"]["email"]["items"][0]["name"] == "user1@example.com"
+        )
+        assert result["search_facets"]["email"]["items"][0]["count"] == 1
+        assert (
+            result["search_facets"]["email"]["items"][1]["name"] == "user2@example.com"
+        )
+        assert result["search_facets"]["email"]["items"][1]["count"] == 1
 
 
 @pytest.mark.usefixtures("pages_setup")
@@ -393,6 +435,47 @@ class TestPageSearch(object):
 
         assert result["results"][0]["title"] == "My page 1"
 
+    def test_page_sort_by_title(self):
+
+        self._create_pages()
+
+        result = call_action("page_search", sort="title_string asc")
+
+        assert [p["title"] for p in result["results"]] == [
+            "My page 1",
+            "My page 2",
+        ]
+
+        result = call_action("page_search", sort="title_string desc")
+
+        assert [p["title"] for p in result["results"]] == [
+            "My page 2",
+            "My page 1",
+        ]
+
+    def test_page_facets(self):
+
+        sysadmin = factories.Sysadmin()
+        context = {
+            "user": sysadmin["name"],
+            "auth_user_obj": model.User.get(sysadmin["id"]),
+        }
+
+        self._create_pages()
+        params = {
+            "facet": "on",
+            "facet.field": ["private"],
+        }
+
+        result = call_action("page_search", context=context, **params)
+
+        assert result["search_facets"]["private"]["title"] == "private"
+
+        assert result["search_facets"]["private"]["items"][0]["name"] == "false"
+        assert result["search_facets"]["private"]["items"][0]["count"] == 2
+        assert result["search_facets"]["private"]["items"][1]["name"] == "true"
+        assert result["search_facets"]["private"]["items"][1]["count"] == 1
+
 
 @pytest.mark.usefixtures("pages_setup", "clean_db", "clean_index")
 class TestSiteSearch(object):
@@ -428,12 +511,14 @@ class TestSiteSearch(object):
             name="test_dataset_1",
             notes="Behold this great dataset",
             owner_org=self.org1["id"],
+            license_id="cc-by",
         )
 
         self.dataset2 = factories.Dataset(
             name="test_dataset_2",
             notes="Witness this great dataset",
             owner_org=self.org2["id"],
+            license_id="odc-odbl",
         )
 
         self.user1 = factories.User(
@@ -483,6 +568,83 @@ class TestSiteSearch(object):
         assert result["users"]["count"] == 1
         assert result["pages"]["count"] == 1
 
+    def test_site_search_namespace_params(self):
+
+        with mock.patch("ckanext.sitesearch.logic.action.toolkit.get_action") as ga:
+
+            params = {
+                "q": "behold",
+                "datasets.rows": 5,
+                "pages.fq": "page_type:page",
+            }
+
+            call_action("site_search", **params)
+
+            assert len(ga().call_args_list) == 5
+
+            # package_search
+            assert ga().call_args_list[0][0][1] == {"rows": 5, "q": "behold"}
+
+            # group/organization/user_search
+            for i in (1, 2, 3):
+                assert ga().call_args_list[i][0][1] == {"q": "behold"}
+
+            # pages_search
+            assert ga().call_args_list[4][0][1] == {
+                "fq": "page_type:page",
+                "q": "behold",
+            }
+
+    def test_site_search_namespace_params_for_facets(self):
+
+        sysadmin = factories.Sysadmin()
+        context = {
+            "user": sysadmin["name"],
+            "auth_user_obj": model.User.get(sysadmin["id"]),
+        }
+
+        params = {
+            "datasets.facet.field": ["license_id"],
+            "users.facet.field": ["email"],
+            "facet": "on",
+            "facet.mincount": 1,
+        }
+
+        result = call_action("site_search", context=context, **params)
+
+        assert (
+            result["datasets"]["search_facets"]["license_id"]["items"][0]["name"]
+            == "odc-odbl"
+        )
+        assert (
+            result["datasets"]["search_facets"]["license_id"]["items"][0]["count"] == 1
+        )
+        assert (
+            result["datasets"]["search_facets"]["license_id"]["items"][1]["name"]
+            == "cc-by"
+        )
+        assert (
+            result["datasets"]["search_facets"]["license_id"]["items"][1]["count"] == 1
+        )
+
+        assert (
+            result["users"]["search_facets"]["email"]["items"][0]["name"]
+            == "user1@example.com"
+        )
+        assert result["users"]["search_facets"]["email"]["items"][0]["count"] == 1
+        assert (
+            result["users"]["search_facets"]["email"]["items"][1]["name"]
+            == "user2@example.com"
+        )
+        assert result["users"]["search_facets"]["email"]["items"][1]["count"] == 1
+
+        assert (
+            result["organizations"]["search_facets"]
+            == result["groups"]["search_facets"]
+            == result["pages"]["search_facets"]
+            == {}
+        )
+
     def test_site_search_not_auth(self):
 
         user = factories.User()
@@ -493,10 +655,98 @@ class TestSiteSearch(object):
         assert "users" not in result
 
 
+class TestParseSearchParams(object):
+    def test_parse_params(self):
+
+        data_dict = {
+            "datasets.start": 0,
+            "datasets.rows": 20,
+            "datasets.facet.field": ["tags", "groups"],
+            "groups.facet.field": ["type"],
+            "facet.limit": 10,
+            "q": "test",
+            "fq": "state:active",
+        }
+
+        search_params = parse_search_params(data_dict)
+
+        assert sorted(search_params.keys()) == [
+            "datasets",
+            "groups",
+            "organizations",
+            "users",
+        ]
+
+        assert search_params["datasets"] == {
+            "start": 0,
+            "rows": 20,
+            "facet.field": ["tags", "groups"],
+            "facet.limit": 10,
+            "q": "test",
+            "fq": "state:active",
+        }
+
+        assert search_params["groups"] == {
+            "facet.field": ["type"],
+            "facet.limit": 10,
+            "q": "test",
+            "fq": "state:active",
+        }
+
+        assert (
+            search_params["organizations"]
+            == search_params["users"]
+            == {
+                "q": "test",
+                "facet.limit": 10,
+                "fq": "state:active",
+            }
+        )
+
+    def test_parse_params_overrides(self):
+
+        data_dict = {
+            "datasets.fq": "state:pending",
+            "fq": "state:active",
+        }
+
+        search_params = parse_search_params(data_dict)
+
+        assert search_params["datasets"]["fq"] == "state:pending"
+        for key in ("groups", "organizations", "users"):
+            assert search_params[key]["fq"] == "state:active"
+
+    def test_parse_params_extra_searches(self):
+
+        data_dict = {
+            "datasets.start": 0,
+            "groups.facet.field": ["type"],
+            "news.fq": "type:page",
+            "facet.limit": 10,
+            "q": "test",
+            "fq": "state:active",
+        }
+
+        search_params = parse_search_params(
+            data_dict, searches=["datasets", "groups", "news"]
+        )
+
+        assert sorted(search_params.keys()) == [
+            "datasets",
+            "groups",
+            "news",
+        ]
+
+        assert search_params["news"] == {
+            "fq": "type:page",
+            "facet.limit": 10,
+            "q": "test",
+        }
+
+
 @pytest.mark.usefixtures("clean_db", "clean_index")
 class TestPackageSearch(object):
-
-    @pytest.mark.ckan_config('ckan.auth.create_unowned_dataset', True)
+    @pytest.mark.ckan_config("ckan.auth.create_unowned_dataset", True)
     def test_package_search_returns_only_datasets(self):
 
         factories.User()
@@ -507,9 +757,7 @@ class TestPackageSearch(object):
         factories.Dataset()
         factories.Dataset(type="custom_dataset")
 
-        context = {
-            'ignore_auth': False
-        }
+        context = {"ignore_auth": False}
 
         result = toolkit.get_action("package_search")(context, {})
 

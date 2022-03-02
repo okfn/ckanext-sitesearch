@@ -117,6 +117,9 @@ def index_page(data_dict, defer_commit=DEFAULT_DEFER_COMMIT_VALUE):
     # the catch-all `text` field
     data_dict["notes"] = strip_html_tags(data_dict["content"])
 
+    # Add string title field for sorting
+    data_dict["title_string"] = data_dict.get("title")
+
     # Permissions
     # The intent is to mimic ckanext-pages behaviour:
     # * If not org_id and private=True -> sysadmins only
