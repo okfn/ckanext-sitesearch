@@ -113,6 +113,16 @@ search_params = {
 
 
 
+### ISiteSearch
+
+The plugin includes a new interface called ISiteSearch that allows to hook logic
+before/after each search. This interface has been inspired by the CKAN's core:
+`before_dataset_search` and `after_dataset_search`.
+
+More details in the Interface's docstring: [interfaces.py](./ckanext/sitesearch/interfaces.py)
+
+
+
 ### CLI
 
 The plugin inlcudes a `ckan` command to reindex the current entities in the database in Solr:
