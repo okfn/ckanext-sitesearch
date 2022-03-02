@@ -5,7 +5,7 @@ class ISiteSearch(Interface):
     """
     Hooks into the search actions to implement custom logic.
 
-    This methods will be called before/after the search is performed to allow
+    These methods will be called before/after the search is performed to allow
     users to modify the search parameters or the search results.
 
     For the case of before_* methods, extensions will receive a dictionary with
