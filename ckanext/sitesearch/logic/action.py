@@ -41,12 +41,13 @@ def group_search(context, data_dict):
     for item in p.PluginImplementations(ISiteSearch):
         data_dict = item.before_group_search(data_dict)
 
-    search_results =  _group_or_org_search("group", context, data_dict)
+    search_results = _group_or_org_search("group", context, data_dict)
 
     for item in p.PluginImplementations(ISiteSearch):
         search_results = item.after_group_search(search_results, data_dict)
 
     return search_results
+
 
 def _group_or_org_search(entity_name, context, data_dict):
     schema = context.get("schema") or default_search_schema()
@@ -79,7 +80,7 @@ def user_search(context, data_dict):
     if not data_dict.get("sort"):
         data_dict["sort"] = "fullname asc, name asc"
 
-    search_results =  _perform_search("user", context, data_dict)
+    search_results = _perform_search("user", context, data_dict)
 
     for item in p.PluginImplementations(ISiteSearch):
         search_results = item.after_user_search(search_results, data_dict)

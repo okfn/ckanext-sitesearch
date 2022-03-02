@@ -94,7 +94,7 @@ def _run_query(query, permission_labels=None):
         )
 
     # Covert facets from lists to dicts
-    facets = solr_response.facets.get('facet_fields', {})
+    facets = solr_response.facets.get("facet_fields", {})
     for field, values in facets.items():
         facets[field] = dict(zip(values[0::2], values[1::2]))
 

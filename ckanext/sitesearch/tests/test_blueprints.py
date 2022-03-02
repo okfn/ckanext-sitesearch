@@ -29,13 +29,12 @@ class TestBlueprint:
         factories.Dataset()
         factories.Dataset(type="custom_dataset")
 
-        response = app.get(u"/dataset?q=*:*")
+        response = app.get("/dataset?q=*:*")
 
         assert "3 datasets found" in response.body
 
         extra_environ = {"REMOTE_USER": sysadmin["name"]}
 
-        response = app.get(u"/dataset?q=*:*", extra_environ=extra_environ)
+        response = app.get("/dataset?q=*:*", extra_environ=extra_environ)
 
         assert "3 datasets found" in response.body
-

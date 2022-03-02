@@ -96,9 +96,7 @@ def pages_update(up_func, context, data_dict):
 
     up_func(context, data_dict)
     name = data_dict.get("page") or data_dict.get("name")
-    page = toolkit.get_action("ckanext_pages_show")(
-        context, {"page": name}
-    )
+    page = toolkit.get_action("ckanext_pages_show")(context, {"page": name})
     index.index_page(page)
 
 
