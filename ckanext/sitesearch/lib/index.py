@@ -117,6 +117,10 @@ def index_page(data_dict, defer_commit=DEFAULT_DEFER_COMMIT_VALUE):
     # the catch-all `text` field
     data_dict["notes"] = strip_html_tags(data_dict["content"])
 
+    # Drop the content field otherwise will get stored in the catch-all `string` field,
+    # which has a length limit which is easy to reach with a page content
+    data_dict.pop("content", None)
+
     # Add string title field for sorting
     data_dict["title_string"] = data_dict.get("title")
 
