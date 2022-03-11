@@ -8,6 +8,8 @@ from sqlalchemy.sql.expression import true, false
 from ckan import model
 from ckan.plugins import toolkit, plugin_loaded
 
+from ckan.lib.search import rebuild as core_index_datasets
+
 from ckanext.sitesearch.lib.index import (
     index_organization,
     index_group,
@@ -65,8 +67,11 @@ def rebuild(entity_type, commit_each, force, quiet, entity_id=None):
         if not plugin_loaded("pages"):
             raise RuntimeError("The `pages` plugin needs to be enabled")
         _rebuild_pages(defer_commit, force, quiet, entity_id)
+    elif entity_type in ("dataset", "datasets", "package", "packages"):
+        _rebuild_datasets(defer_commit, force, quiet, entity_id)
     else:
         toolkit.error_shout("Unknown entity type: {}".format(entity_type))
+        raise click.Abort()
 
 
 def _rebuild_orgs(defer_commit, force, quiet, entity_id):
@@ -147,6 +152,17 @@ def _rebuild_pages(defer_commit, force, quiet, entity_id):
         force,
         quiet,
         id_field="page",
+    )
+
+
+def _rebuild_datasets(defer_commit, force, quiet, entity_id):
+
+    core_index_datasets(
+        refresh=True,  # Ensure we are not clearing the index for the other enitities
+        package_id=entity_id,
+        force=force,
+        quiet=quiet,
+        defer_commit=defer_commit,
     )
 
 

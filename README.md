@@ -138,6 +138,16 @@ Check the command help for additional options:
 
     ckan sitesearch rebuild --help
 
+#### Indexing datasets
+
+The CKAN core command for rebuilding the search index (`ckan search-index rebuild`) by default clears the whole index before re-indexing the datasets. This means that all non-datasets entities will disappear from the index. To avoid this, this extension adds a convenience wrapper command that ensures that the index is not cleared when rebuilding the datasets index:
+
+    ckan sitesearch rebuild datasets
+
+Which is equivalent to run:
+
+    ckan search-index rebuild -r
+
 
 ## Installation
 
