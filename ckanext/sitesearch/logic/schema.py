@@ -18,7 +18,7 @@ def default_search_schema(
         "fl": [ignore_missing, convert_to_list_if_string],
         "fq": [ignore_missing, unicode_safe],
         "rows": [
-            default(10),
+            default(20),
             natural_number_validator,
             limit_to_configured_maximum("ckan.search.rows_max", 1000),
         ],
