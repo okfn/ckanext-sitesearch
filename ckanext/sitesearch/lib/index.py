@@ -1,5 +1,6 @@
 import logging
 import hashlib
+from html import unescape
 import json
 import socket
 
@@ -91,6 +92,25 @@ def index_user(data_dict, defer_commit=DEFAULT_DEFER_COMMIT_VALUE):
     return _send_to_solr(data_dict, defer_commit)
 
 
+def _sanitize_text_for_search(text):
+
+    # Remove HTML tags
+    text = strip_html_tags(text)
+
+    # Decode HTML entities
+    text = unescape(text)
+
+    # Replace line breaks
+    for char in ("\r", "\n"):
+        text = text.replace(char, "")
+
+    # Replace tabs and spaces
+    for char in ("\xa0", "\t"):
+        text = text.replace(char, " ")
+
+    return text
+
+
 def index_page(data_dict, defer_commit=DEFAULT_DEFER_COMMIT_VALUE):
 
     if not data_dict:
@@ -115,7 +135,7 @@ def index_page(data_dict, defer_commit=DEFAULT_DEFER_COMMIT_VALUE):
 
     # Index content (minus HTML tags) in the notes field so it gets copied to
     # the catch-all `text` field
-    data_dict["notes"] = strip_html_tags(data_dict["content"])
+    data_dict["notes"] = _sanitize_text_for_search(data_dict["content"])
 
     # Drop the content field otherwise will get stored in the catch-all `string` field,
     # which has a length limit which is easy to reach with a page content

@@ -389,6 +389,13 @@ class TestPageSearch(object):
 
         assert result["count"] == 2
 
+    def test_page_search_wildcard_html_tags(self):
+
+        self._create_pages()
+        result = call_action("page_search", q="Behold*")
+
+        assert result["count"] == 1
+
     def test_page_search_or(self):
 
         self._create_pages()
