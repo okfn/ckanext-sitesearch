@@ -5,7 +5,6 @@ jobs:
     runs-on: ubuntu-latest
     strategy:
       matrix:
-        ckan-version: ["2.10", 2.9]
         include:
             - ckan-version: "2.10"
               solr-image: "2.10"
