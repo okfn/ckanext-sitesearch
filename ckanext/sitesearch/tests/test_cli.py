@@ -1,6 +1,7 @@
 import pytest
 
 from ckan import model
+from ckan.plugins import toolkit
 import ckan.tests.factories as factories
 import ckan.tests.helpers as helpers
 from ckan.cli.cli import ckan
@@ -73,12 +74,15 @@ class TestSiteSearchCLI:
             == 1
         )
 
-    def test_core_search_index_rebuild_with_r_does_not_clear_the_rest(self, cli):
+    def test_core_search_index_rebuild_does_not_clear_the_rest(self, cli):
 
         org = factories.Organization()
         factories.Dataset(owner_org=org["id"])
 
-        result = cli.invoke(ckan, ["search-index", "rebuild", "-r"])
+        if toolkit.check_ckan_version(min_version="2.10"):
+            result = cli.invoke(ckan, ["search-index", "rebuild"])
+        else:
+            result = cli.invoke(ckan, ["search-index", "rebuild", "-r"])
         assert not result.exit_code
         search_result = helpers.call_action("organization_search")
         assert search_result["count"] == 1
