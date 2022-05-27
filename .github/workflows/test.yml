@@ -7,12 +7,12 @@ jobs:
       matrix:
         ckan-version: ["2.10", 2.9]
         include:
-            - ckan-version: "2.10"
-              solr-image: "2.10"
-            - ckan-version: 2.9
-              solr-image: 2.9
-            - ckan-version: 2.9
-              solr-image: 2.9-solr8
+          - ckan-version: "2.10"
+            solr-image: "2.10"
+          - ckan-version: 2.9
+            solr-image: 2.9
+          - ckan-version: 2.9
+            solr-image: 2.9-solr8
       fail-fast: false
     container:
       image: openknowledge/ckan-dev:{{ matrix.ckan-version }}
