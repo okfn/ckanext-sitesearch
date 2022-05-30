@@ -10,51 +10,50 @@ from ckan.tests import factories, helpers
 
 from ckanext.sitesearch.lib.index import index_page
 from ckanext.sitesearch.logic.action import parse_search_params
-from ckanext.pages import db
+from ckanext.pages import db as pages_db
 
 call_action = helpers.call_action
 
 
 @pytest.fixture
 def pages_setup():
-    db.init_db()
+    pages_db.init_db()
 
 
+@pytest.fixture(scope="class")
+def group_search_fixtures():
+    factories.Group(
+        name="test_group_1",
+        title="My Group 1",
+        description="Witness this great group",
+    )
+
+    factories.Organization(
+        name="test_org_1",
+        title="My organization 1",
+        description="Behold this great organization",
+        extras=[
+            {"key": "extra_org_common", "value": "pear"},
+            {"key": "extra_org_1", "value": 4},
+        ],
+    )
+
+    factories.Organization(
+        name="test_org_2",
+        title="My organization 2",
+        description="Marvel at this great organization",
+        extras=[
+            {"key": "extra_org_common", "value": "peach"},
+            {"key": "extra_org_2", "value": 6},
+        ],
+    )
+    yield
+    helpers.reset_db()
+    reset_index()
+
+
+@pytest.mark.usefixtures("group_search_fixtures")
 class TestGroupOrOrgSearch(object):
-    @classmethod
-    def setup_class(cls):
-
-        cls.group = factories.Group(
-            name="test_group_1",
-            title="My Group 1",
-            description="Witness this great group",
-        )
-
-        cls.org1 = factories.Organization(
-            name="test_org_1",
-            title="My organization 1",
-            description="Behold this great organization",
-            extras=[
-                {"key": "extra_org_common", "value": "pear"},
-                {"key": "extra_org_1", "value": 4},
-            ],
-        )
-
-        cls.org2 = factories.Organization(
-            name="test_org_2",
-            title="My organization 2",
-            description="Marvel at this great organization",
-            extras=[
-                {"key": "extra_org_common", "value": "peach"},
-                {"key": "extra_org_2", "value": 6},
-            ],
-        )
-
-    @classmethod
-    def teardown_class(cls):
-        helpers.reset_db()
-        reset_index()
-
     def test_group_search_no_params(self):
         result = call_action("group_search")
 
@@ -161,30 +160,28 @@ class TestGroupOrOrgSearch(object):
         assert result["search_facets"]["extra_org_common"]["items"][1]["count"] == 1
 
 
-@pytest.mark.usefixtures("pages_setup")
+@pytest.fixture(scope="class")
+def user_search_fixtures():
+    factories.User(
+        name="test_user_1",
+        fullname="My user 1",
+        email="user1@example.com",
+        about="Behold this great user",
+    )
+
+    factories.User(
+        name="test_user_2",
+        fullname="My user 2",
+        email="user2@example.com",
+        about="Witness this great user",
+    )
+    yield
+    helpers.reset_db()
+    reset_index()
+
+
+@pytest.mark.usefixtures("pages_setup", "user_search_fixtures")
 class TestUserSearch(object):
-    @classmethod
-    def setup_class(cls):
-
-        cls.user1 = factories.User(
-            name="test_user_1",
-            fullname="My user 1",
-            email="user1@example.com",
-            about="Behold this great user",
-        )
-
-        cls.user2 = factories.User(
-            name="test_user_2",
-            fullname="My user 2",
-            email="user2@example.com",
-            about="Witness this great user",
-        )
-
-    @classmethod
-    def teardown_class(cls):
-        helpers.reset_db()
-        reset_index()
-
     def test_user_search_no_params(self):
         result = call_action("user_search")
 
@@ -273,8 +270,9 @@ class TestUserSearch(object):
 @pytest.mark.usefixtures("pages_setup")
 class TestPageSearch(object):
     @classmethod
-    def _create_pages(cls):
-        sysadmin = factories.Sysadmin()
+    def _create_pages(cls, sysadmin=None):
+        if not sysadmin:
+            sysadmin = factories.Sysadmin()
         context = {
             "user": sysadmin["name"],
             "auth_user_obj": model.User.get(sysadmin["id"]),
@@ -484,71 +482,73 @@ class TestPageSearch(object):
         assert result["search_facets"]["private"]["items"][1]["count"] == 1
 
 
-@pytest.mark.usefixtures("pages_setup", "clean_db", "clean_index")
+@pytest.fixture()
+def site_search_fixtures():
+
+    factories.Group(
+        name="test_group_1",
+        title="My Group 1",
+        description="Witness this great group",
+    )
+
+    org1 = factories.Organization(
+        name="test_org_1",
+        title="My organization 1",
+        description="Behold this great organization",
+        extras=[
+            {"key": "extra_org_common", "value": "pear"},
+            {"key": "extra_org_1", "value": 4},
+        ],
+    )
+
+    org2 = factories.Organization(
+        name="test_org_2",
+        title="My organization 2",
+        description="Marvel at this great organization",
+        extras=[
+            {"key": "extra_org_common", "value": "peach"},
+            {"key": "extra_org_2", "value": 6},
+        ],
+    )
+
+    factories.Dataset(
+        name="test_dataset_1",
+        notes="Behold this great dataset",
+        owner_org=org1["id"],
+        license_id="cc-by",
+    )
+
+    factories.Dataset(
+        name="test_dataset_2",
+        notes="Witness this great dataset",
+        owner_org=org2["id"],
+        license_id="odc-odbl",
+    )
+
+    factories.User(
+        name="test_user_1",
+        fullname="My user 1",
+        email="user1@example.com",
+        about="Behold this great user",
+    )
+
+    sysadmin = factories.Sysadmin(
+        name="test_user_2",
+        fullname="My user 2",
+        email="user2@example.com",
+        about="Witness this great user",
+    )
+
+    TestPageSearch._create_pages(sysadmin=sysadmin)
+    yield
+    helpers.reset_db()
+    reset_index()
+
+
+@pytest.mark.usefixtures(
+    "pages_setup", "clean_db", "clean_index", "site_search_fixtures"
+)
 class TestSiteSearch(object):
-    def setup(self):
-
-        self.group = factories.Group(
-            name="test_group_1",
-            title="My Group 1",
-            description="Witness this great group",
-        )
-
-        self.org1 = factories.Organization(
-            name="test_org_1",
-            title="My organization 1",
-            description="Behold this great organization",
-            extras=[
-                {"key": "extra_org_common", "value": "pear"},
-                {"key": "extra_org_1", "value": 4},
-            ],
-        )
-
-        self.org2 = factories.Organization(
-            name="test_org_2",
-            title="My organization 2",
-            description="Marvel at this great organization",
-            extras=[
-                {"key": "extra_org_common", "value": "peach"},
-                {"key": "extra_org_2", "value": 6},
-            ],
-        )
-
-        self.dataset1 = factories.Dataset(
-            name="test_dataset_1",
-            notes="Behold this great dataset",
-            owner_org=self.org1["id"],
-            license_id="cc-by",
-        )
-
-        self.dataset2 = factories.Dataset(
-            name="test_dataset_2",
-            notes="Witness this great dataset",
-            owner_org=self.org2["id"],
-            license_id="odc-odbl",
-        )
-
-        self.user1 = factories.User(
-            name="test_user_1",
-            fullname="My user 1",
-            email="user1@example.com",
-            about="Behold this great user",
-        )
-
-        self.user2 = factories.User(
-            name="test_user_2",
-            fullname="My user 2",
-            email="user2@example.com",
-            about="Witness this great user",
-        )
-
-        TestPageSearch._create_pages()
-
-    @classmethod
-    def teardown_class(cls):
-        helpers.reset_db()
-        reset_index()
-
     def test_site_search_no_params(self):
         result = call_action("site_search")
 
@@ -604,7 +604,7 @@ class TestSiteSearch(object):
 
     def test_site_search_namespace_params_for_facets(self):
 
-        sysadmin = factories.Sysadmin()
+        sysadmin = factories.Sysadmin(email="sysadmin1@example.com")
         context = {
             "user": sysadmin["name"],
             "auth_user_obj": model.User.get(sysadmin["id"]),
@@ -636,14 +636,20 @@ class TestSiteSearch(object):
 
         assert (
             result["users"]["search_facets"]["email"]["items"][0]["name"]
-            == "user1@example.com"
+            == "sysadmin1@example.com"
         )
         assert result["users"]["search_facets"]["email"]["items"][0]["count"] == 1
+
         assert (
             result["users"]["search_facets"]["email"]["items"][1]["name"]
-            == "user2@example.com"
+            == "user1@example.com"
         )
         assert result["users"]["search_facets"]["email"]["items"][1]["count"] == 1
+        assert (
+            result["users"]["search_facets"]["email"]["items"][2]["name"]
+            == "user2@example.com"
+        )
+        assert result["users"]["search_facets"]["email"]["items"][2]["count"] == 1
 
         assert (
             result["organizations"]["search_facets"]
