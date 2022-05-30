@@ -162,7 +162,6 @@ To install ckanext-sitesearch:
     git clone https://github.com/okfn/ckanext-sitesearch.git
     cd ckanext-sitesearch
     pip install -e .
-	pip install -r requirements.txt
 
 3. Add `sitesearch` to the `ckan.plugins` setting in your CKAN
    config file (by default the config file is located at

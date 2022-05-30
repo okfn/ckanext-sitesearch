@@ -5,12 +5,16 @@ jobs:
     runs-on: ubuntu-latest
     strategy:
       matrix:
-        ckan-version: [2.9]
-        solr-image: [2.9, 2.9-solr8]
+        include:
+          - ckan-version: "2.10"
+            solr-image: "2.10"
+          - ckan-version: 2.9
+            solr-image: 2.9
+          - ckan-version: 2.9
+            solr-image: 2.9-solr8
       fail-fast: false
     container:
-      # TODO: Switch to 2.9 when 2.9.5 is released
-      image: openknowledge/ckan-dev:2.9.5
+      image: openknowledge/ckan-dev:${{ matrix.ckan-version }}
     services:
       solr:
         image: ckan/ckan-solr:${{ matrix.solr-image }}
@@ -36,7 +40,6 @@ jobs:
     - name: Install requirements
       # Install any extra requirements your extension has here (dev requirements, other extensions etc)
       run: |
-        pip install -r requirements.txt
         pip install -r dev-requirements.txt
         pip install -e .
     - name: Setup extension

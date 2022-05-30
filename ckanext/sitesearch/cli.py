@@ -157,13 +157,22 @@ def _rebuild_pages(defer_commit, force, quiet, entity_id):
 
 def _rebuild_datasets(defer_commit, force, quiet, entity_id):
 
-    core_index_datasets(
-        refresh=True,  # Ensure we are not clearing the index for the other enitities
-        package_id=entity_id,
-        force=force,
-        quiet=quiet,
-        defer_commit=defer_commit,
-    )
+    if toolkit.check_ckan_version(min_version="2.10"):
+        # CKAN >= 2.10 does not clear the index by default
+        core_index_datasets(
+            package_id=entity_id,
+            force=force,
+            quiet=quiet,
+            defer_commit=defer_commit,
+        )
+    else:
+        core_index_datasets(
+            refresh=True,  # Ensure we are not clearing the index for other enitities
+            package_id=entity_id,
+            force=force,
+            quiet=quiet,
+            defer_commit=defer_commit,
+        )
 
 
 indexers = {
