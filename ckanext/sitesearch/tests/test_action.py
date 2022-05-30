@@ -15,6 +15,11 @@ from ckanext.pages import db as pages_db
 call_action = helpers.call_action
 
 
+class Sysadmin(factories.User):
+
+    sysadmin = True
+
+
 @pytest.fixture
 def pages_setup():
     pages_db.init_db()
@@ -272,7 +277,7 @@ class TestPageSearch(object):
     @classmethod
     def _create_pages(cls, sysadmin=None):
         if not sysadmin:
-            sysadmin = factories.Sysadmin()
+            sysadmin = Sysadmin()
         context = {
             "user": sysadmin["name"],
             "auth_user_obj": model.User.get(sysadmin["id"]),
@@ -343,7 +348,7 @@ class TestPageSearch(object):
 
         self._create_pages()
 
-        sysadmin = factories.Sysadmin()
+        sysadmin = Sysadmin()
         context = {
             "user": sysadmin["name"],
             "auth_user_obj": model.User.get(sysadmin["id"]),
@@ -460,7 +465,7 @@ class TestPageSearch(object):
 
     def test_page_facets(self):
 
-        sysadmin = factories.Sysadmin()
+        sysadmin = Sysadmin()
         context = {
             "user": sysadmin["name"],
             "auth_user_obj": model.User.get(sysadmin["id"]),
@@ -532,7 +537,7 @@ def site_search_fixtures():
         about="Behold this great user",
     )
 
-    sysadmin = factories.Sysadmin(
+    sysadmin = Sysadmin(
         name="test_user_2",
         fullname="My user 2",
         email="user2@example.com",
@@ -604,7 +609,7 @@ class TestSiteSearch(object):
 
     def test_site_search_namespace_params_for_facets(self):
 
-        sysadmin = factories.Sysadmin(email="sysadmin1@example.com")
+        sysadmin = Sysadmin(email="sysadmin1@example.com")
         context = {
             "user": sysadmin["name"],
             "auth_user_obj": model.User.get(sysadmin["id"]),
