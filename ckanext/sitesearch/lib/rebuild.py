@@ -17,7 +17,7 @@ if plugin_loaded("pages"):
 log = logging.getLogger(__name__)
 
 
-def rebuild_orgs(defer_commit, force, quiet, entity_id):
+def rebuild_orgs(defer_commit=False, force=False, quiet=True, entity_id=None):
     if entity_id:
         org = model.Group.get(entity_id)
         if not org:
@@ -37,7 +37,7 @@ def rebuild_orgs(defer_commit, force, quiet, entity_id):
     )
 
 
-def rebuild_groups(defer_commit, force, quiet, entity_id):
+def rebuild_groups(defer_commit=False, force=False, quiet=True, entity_id=None):
 
     if entity_id:
         group = model.Group.get(entity_id)
@@ -56,7 +56,7 @@ def rebuild_groups(defer_commit, force, quiet, entity_id):
     _rebuild_entities(group_ids, "group", "group_show", defer_commit, force, quiet)
 
 
-def rebuild_users(defer_commit, force, quiet, entity_id):
+def rebuild_users(defer_commit=False, force=False, quiet=True, entity_id=None):
 
     if entity_id:
         user = model.User.get(entity_id)
@@ -74,7 +74,7 @@ def rebuild_users(defer_commit, force, quiet, entity_id):
     _rebuild_entities(user_ids, "user", "user_show", defer_commit, force, quiet)
 
 
-def rebuild_pages(defer_commit, force, quiet, entity_id):
+def rebuild_pages(defer_commit=False, force=False, quiet=True, entity_id=None):
 
     if not plugin_loaded("pages"):
         raise RuntimeError("The `pages` plugin needs to be enabled")
@@ -99,7 +99,7 @@ def rebuild_pages(defer_commit, force, quiet, entity_id):
     )
 
 
-def rebuild_datasets(defer_commit, force, quiet, entity_id):
+def rebuild_datasets(defer_commit=False, force=False, quiet=True, entity_id=None):
 
     if toolkit.check_ckan_version(min_version="2.10"):
         # CKAN >= 2.10 does not clear the index by default
