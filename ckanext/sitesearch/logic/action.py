@@ -5,7 +5,7 @@ from ckan import plugins as p
 from ckan.plugins import toolkit, plugin_loaded
 
 from ckanext.sitesearch.logic.schema import default_search_schema
-from ckanext.sitesearch.lib import query
+from ckanext.sitesearch.lib import rebuild, query
 from ckanext.sitesearch.interfaces import ISiteSearch
 
 
@@ -267,3 +267,15 @@ def _get_user_page_labels(user_id):
     labels.extend("group_id-%s" % o["id"] for o in orgs)
 
     return labels
+
+
+def rebuild_organizations_index(context, data_dict):
+
+    toolkit.check_access("group_update", context, data_dict)
+
+    defer_commit = data_dict.get("defer_commit", False)
+    force = data_dict.get("force", False)
+    quiet = data_dict.get("quiet", True)
+    entity_id = data_dict.get("id", None)
+
+    rebuild.rebuild_orgs(defer_commit, force, quiet, entity_id)
