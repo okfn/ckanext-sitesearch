@@ -18,7 +18,6 @@ log = logging.getLogger(__name__)
 
 
 def rebuild_orgs(defer_commit, force, quiet, entity_id):
-    print(entity_id)
     if entity_id:
         org = model.Group.get(entity_id)
         if not org:
