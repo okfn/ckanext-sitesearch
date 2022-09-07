@@ -2,9 +2,13 @@ import logging
 
 import click
 from ckan.plugins import toolkit
-from ckanext.sitesearch.lib.rebuild import (rebuild_datasets, rebuild_groups,
-                                            rebuild_orgs, rebuild_pages,
-                                            rebuild_users)
+from ckanext.sitesearch.lib.rebuild import (
+    rebuild_datasets,
+    rebuild_groups,
+    rebuild_orgs,
+    rebuild_pages,
+    rebuild_users,
+)
 
 log = logging.getLogger(__name__)
 
