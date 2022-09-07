@@ -1,9 +1,17 @@
 import pytest
 
+from ckan.lib.search import clear_all
 from ckan.tests import factories, helpers
 
 
-@pytest.mark.usefixtures("clean_db", "clean_index")
+@pytest.fixture(scope="class")
+def reset():
+    yield
+    helpers.reset_db()
+    clear_all()
+
+
+@pytest.mark.usefixtures("reset")
 class TestOrgMetadataUpdate(object):
     def test_org_package_count_is_updated(self):
         org = factories.Organization()
