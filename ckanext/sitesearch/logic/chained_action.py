@@ -16,6 +16,20 @@ def package_create(up_func, context, data_dict):
 
 
 @toolkit.chained_action
+def package_delete(up_func, context, data_dict):
+    package_id = toolkit.get_or_bust(data_dict, "id")
+    dataset = toolkit.get_action("package_show")(context, {"id": package_id})
+
+    up_func(context, data_dict)
+
+    owner_org = dataset.get("owner_org", None)
+    if owner_org:
+        rebuild.rebuild_orgs(entity_id=owner_org)
+
+    return data_dict
+
+
+@toolkit.chained_action
 def organization_create(up_func, context, data_dict):
 
     data_dict = up_func(context, data_dict)

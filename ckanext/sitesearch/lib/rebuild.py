@@ -5,10 +5,13 @@ import traceback
 from ckan import model
 from ckan.lib.search import rebuild as core_index_datasets
 from ckan.plugins import plugin_loaded, toolkit
-from ckanext.sitesearch.lib.index import (commit, index_group,
-                                          index_organization,
-                                          index_page,
-                                          index_user)
+from ckanext.sitesearch.lib.index import (
+    commit,
+    index_group,
+    index_organization,
+    index_page,
+    index_user,
+)
 from sqlalchemy.sql.expression import false, true
 
 if plugin_loaded("pages"):

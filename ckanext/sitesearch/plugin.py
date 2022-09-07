@@ -40,6 +40,7 @@ class SitesearchPlugin(plugins.SingletonPlugin):
             "user_update": chained_action.user_update,
             "user_delete": chained_action.user_delete,
             "package_create": chained_action.package_create,
+            "package_delete": chained_action.package_delete,
             "rebuild_organizations_index": action.rebuild_organizations_index,
         }
         if plugins.plugin_loaded("pages"):
