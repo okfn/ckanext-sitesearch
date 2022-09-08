@@ -283,10 +283,12 @@ def package_groups(context, data_dict):
     for group in groups:
         if group.is_organization:
             group_dict = toolkit.get_action("organization_show")(
-                context, {"id": group.id}
+                context.copy(), {"id": group.id}
             )
         else:
-            group_dict = toolkit.get_action("group_show")(context, {"id": group.id})
+            group_dict = toolkit.get_action("group_show")(
+                context.copy(), {"id": group.id}
+            )
         result.append(group_dict)
 
     return result
