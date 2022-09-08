@@ -1,6 +1,6 @@
+from ckan import model
 from ckan.plugins import toolkit
 
-from ckanext.sitesearch.logic.action import package_groups
 from ckanext.sitesearch.lib import index, rebuild
 
 
@@ -19,15 +19,18 @@ def package_create(up_func, context, data_dict):
 @toolkit.chained_action
 def package_delete(up_func, context, data_dict):
     package_id = toolkit.get_or_bust(data_dict, "id")
-    groups = package_groups(context.copy(), {"id": package_id})
+    pkg = model.Package.get(package_id)
+    if not pkg:
+        raise toolkit.ObjectNotFound
+    groups = pkg.get_groups()
 
     up_func(context, data_dict)
 
     for group in groups:
-        if group["is_organization"]:
-            rebuild.rebuild_orgs(entity_id=group["id"])
+        if group.is_organization:
+            rebuild.rebuild_orgs(entity_id=group.id)
         else:
-            rebuild.rebuild_groups(entity_id=group["id"])
+            rebuild.rebuild_groups(entity_id=group.id)
 
     return data_dict
 
