@@ -1,5 +1,6 @@
 from ckan.plugins import toolkit
 
+from ckanext.sitesearch.logic.action import package_groups
 from ckanext.sitesearch.lib import index, rebuild
 
 
@@ -18,13 +19,15 @@ def package_create(up_func, context, data_dict):
 @toolkit.chained_action
 def package_delete(up_func, context, data_dict):
     package_id = toolkit.get_or_bust(data_dict, "id")
-    dataset = toolkit.get_action("package_show")(context, {"id": package_id})
+    groups = package_groups(context.copy(), {"id": package_id})
 
     up_func(context, data_dict)
 
-    owner_org = dataset.get("owner_org", None)
-    if owner_org:
-        rebuild.rebuild_orgs(entity_id=owner_org)
+    for group in groups:
+        if group["is_organization"]:
+            rebuild.rebuild_orgs(entity_id=group["id"])
+        else:
+            rebuild.rebuild_groups(entity_id=group["id"])
 
     return data_dict
 
@@ -132,3 +135,15 @@ def pages_delete(up_func, context, data_dict):
     up_func(context, data_dict)
 
     index.delete_page(data_dict["id"])
+
+
+@toolkit.chained_action
+def member_create(up_func, context, data_dict):
+
+    result = up_func(context, data_dict)
+    object_type = data_dict.get("object_type", None)
+
+    if object_type and object_type == "package":
+        rebuild.rebuild_groups(entity_id=data_dict["id"])
+
+    return result

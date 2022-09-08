@@ -267,3 +267,26 @@ def _get_user_page_labels(user_id):
     labels.extend("group_id-%s" % o["id"] for o in orgs)
 
     return labels
+
+
+def package_groups(context, data_dict):
+    """Returns a list of all the groups the package is a member of"""
+    package_id = toolkit.get_or_bust(data_dict, "id")
+
+    pkg = model.Package.get(package_id)
+    if not pkg:
+        raise toolkit.ObjectNotFound
+
+    groups = pkg.get_groups()
+
+    result = []
+    for group in groups:
+        if group.is_organization:
+            group_dict = toolkit.get_action("organization_show")(
+                context, {"id": group.id}
+            )
+        else:
+            group_dict = toolkit.get_action("group_show")(context, {"id": group.id})
+        result.append(group_dict)
+
+    return result
