@@ -21,10 +21,13 @@ class TestRebuild:
         dataset = helpers.call_action(
             "package_create", {}, name="testing-package", owner_org=org["id"]
         )
+        helpers.call_action(
+            "package_create", {}, name="testing-package-2", owner_org=org["id"]
+        )
 
         result = helpers.call_action("organization_search", {}, q="*:*")
         assert result["count"] == 1
-        assert result["results"][0]["package_count"] == 1
+        assert result["results"][0]["package_count"] == 2
 
         helpers.call_action(
             "package_delete",
@@ -34,7 +37,7 @@ class TestRebuild:
 
         result = helpers.call_action("organization_search", {}, q="*:*")
         assert result["count"] == 1
-        assert result["results"][0]["package_count"] == 0
+        assert result["results"][0]["package_count"] == 1
 
     def test_group_package_count_is_updated(self):
         group = factories.Group()
@@ -45,6 +48,7 @@ class TestRebuild:
         assert result["results"][0]["package_count"] == 0
 
         dataset = factories.Dataset(owner_org=org["id"])
+        dataset2 = factories.Dataset(owner_org=org["id"])
 
         helpers.call_action(
             "member_create",
@@ -53,10 +57,17 @@ class TestRebuild:
             object_type="package",
             capacity="member",
         )
+        helpers.call_action(
+            "member_create",
+            object=dataset2["id"],
+            id=group["id"],
+            object_type="package",
+            capacity="member",
+        )
 
         result = helpers.call_action("group_search", {}, q="*:*")
         assert result["count"] == 1
-        assert result["results"][0]["package_count"] == 1
+        assert result["results"][0]["package_count"] == 2
 
         helpers.call_action(
             "package_delete",
@@ -66,4 +77,4 @@ class TestRebuild:
 
         result = helpers.call_action("group_search", {}, q="*:*")
         assert result["count"] == 1
-        assert result["results"][0]["package_count"] == 0
+        assert result["results"][0]["package_count"] == 1
