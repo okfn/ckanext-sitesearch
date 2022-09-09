@@ -98,3 +98,7 @@ class TestSiteSearchCLI:
         search_result = helpers.call_action("organization_search")
         assert search_result["count"] == 1
         assert search_result["results"][0]["id"] == org["id"]
+
+    def test_rebuild_pages_invoked_correctly(self, cli):
+        result = cli.invoke(ckan, ["sitesearch", "rebuild", "pages"])
+        assert not result.exit_code
