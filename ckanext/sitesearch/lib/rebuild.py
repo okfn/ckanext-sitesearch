@@ -14,9 +14,6 @@ from ckanext.sitesearch.lib.index import (
 )
 from sqlalchemy.sql.expression import false, true
 
-if plugin_loaded("pages"):
-    from ckanext.pages.db import Page
-
 log = logging.getLogger(__name__)
 
 
@@ -79,7 +76,9 @@ def rebuild_users(defer_commit=False, force=False, quiet=True, entity_id=None):
 
 def rebuild_pages(defer_commit=False, force=False, quiet=True, entity_id=None):
 
-    if not plugin_loaded("pages"):
+    if plugin_loaded("pages"):
+        from ckanext.pages.db import Page
+    else:
         raise RuntimeError("The `pages` plugin needs to be enabled")
 
     if entity_id:
