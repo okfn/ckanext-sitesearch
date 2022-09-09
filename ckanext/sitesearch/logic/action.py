@@ -5,7 +5,7 @@ from ckan import plugins as p
 from ckan.plugins import toolkit, plugin_loaded
 
 from ckanext.sitesearch.logic.schema import default_search_schema
-from ckanext.sitesearch.lib import query
+from ckanext.sitesearch.lib import rebuild, query
 from ckanext.sitesearch.interfaces import ISiteSearch
 
 
