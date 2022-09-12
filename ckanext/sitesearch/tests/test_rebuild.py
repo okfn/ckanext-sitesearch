@@ -78,3 +78,27 @@ class TestRebuild:
         result = helpers.call_action("group_search", {}, q="*:*")
         assert result["count"] == 1
         assert result["results"][0]["package_count"] == 1
+
+    def test_orgs_are_rebuild_when_updating_package_owner_org(self):
+        org = factories.Organization()
+        dataset = factories.Dataset(owner_org=org["id"])
+
+        result = helpers.call_action("organization_search", {}, q="*:*")
+        assert result["count"] == 1
+        assert result["results"][0]["package_count"] == 1
+
+        new_org = factories.Organization()
+
+        helpers.call_action(
+            "package_update", {}, id=dataset["id"], owner_org=new_org["id"]
+        )
+
+        result = helpers.call_action("organization_search", {}, q=f'name:{org["name"]}')
+        assert result["count"] == 1
+        assert result["results"][0]["package_count"] == 0
+
+        result = helpers.call_action(
+            "organization_search", {}, q=f'name:{new_org["name"]}'
+        )
+        assert result["count"] == 1
+        assert result["results"][0]["package_count"] == 1

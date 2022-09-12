@@ -41,6 +41,7 @@ class SitesearchPlugin(plugins.SingletonPlugin):
             "user_delete": chained_action.user_delete,
             "package_create": chained_action.package_create,
             "package_delete": chained_action.package_delete,
+            "package_update": chained_action.package_update,
             "member_create": chained_action.member_create,
         }
         if plugins.plugin_loaded("pages"):

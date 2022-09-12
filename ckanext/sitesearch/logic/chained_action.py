@@ -36,6 +36,26 @@ def package_delete(up_func, context, data_dict):
 
 
 @toolkit.chained_action
+def package_update(up_func, context, data_dict):
+    package_id = toolkit.get_or_bust(data_dict, "id")
+    pkg = model.Package.get(package_id)
+    if not pkg:
+        raise toolkit.ObjectNotFound
+    old_org = pkg.owner_org
+
+    data_dict = up_func(context, data_dict)
+    new_org = data_dict.get("owner_org", None)
+
+    if old_org != new_org:
+        if old_org:
+            rebuild.rebuild_orgs(entity_id=old_org)
+        if new_org:
+            rebuild.rebuild_orgs(entity_id=new_org)
+
+    return data_dict
+
+
+@toolkit.chained_action
 def organization_create(up_func, context, data_dict):
 
     data_dict = up_func(context, data_dict)
