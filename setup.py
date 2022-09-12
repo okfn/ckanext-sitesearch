@@ -12,7 +12,7 @@ with open(path.join(here, "README.md"), encoding="utf-8") as f:
 
 setup(
     name="""ckanext-sitesearch""",
-    version="0.2.2",
+    version="0.2.3",
     description="""Solr search for other CKAN entities than datasets""",
     long_description=long_description,
     long_description_content_type="text/markdown",
