@@ -37,22 +37,51 @@ def package_delete(up_func, context, data_dict):
 
 @toolkit.chained_action
 def package_update(up_func, context, data_dict):
+    """Adds index rebuild logic to the package_update action.
+
+    This method triggers a reindex in the organizations to properly
+    update it's package_count attribute.
+    """
     package_id = toolkit.get_or_bust(data_dict, "id")
     pkg = model.Package.get(package_id)
     if not pkg:
         raise toolkit.ObjectNotFound
-    old_org = pkg.owner_org
+    state = pkg.state
+    organization = pkg.owner_org
 
     data_dict = up_func(context, data_dict)
+
+    _rebuild_org_if_org_changed(data_dict, organization)
+    _rebuild_org_if_pkg_state_changed(data_dict, state)
+
+    return data_dict
+
+
+def _rebuild_org_if_org_changed(data_dict, organization):
+    """Rebuild both old and new organizations if they change."""
     new_org = data_dict.get("owner_org", None)
 
-    if old_org != new_org:
-        if old_org:
-            rebuild.rebuild_orgs(entity_id=old_org)
+    if organization != new_org:
+        if organization:
+            rebuild.rebuild_orgs(entity_id=organization)
         if new_org:
             rebuild.rebuild_orgs(entity_id=new_org)
 
-    return data_dict
+
+def _rebuild_org_if_pkg_state_changed(data_dict, state):
+    """Rebuild the new organization if the package state changes.
+
+    When a package goes from draft to active we need to reindex the
+    organization to properly reflect the package_count attribute. This
+    scenario happens when creating a package using the UI.
+    """
+    new_org = data_dict.get("owner_org")
+    if not new_org:
+        return
+
+    new_state = data_dict.get("state")
+    if state == "draft" and new_state == "active":
+        rebuild.rebuild_orgs(entity_id=new_org)
 
 
 @toolkit.chained_action
