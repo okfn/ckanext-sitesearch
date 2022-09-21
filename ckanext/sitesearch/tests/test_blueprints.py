@@ -38,3 +38,51 @@ class TestBlueprint:
         response = app.get("/dataset?q=*:*", extra_environ=extra_environ)
 
         assert "3 datasets found" in response.body
+
+
+@pytest.mark.usefixtures("clean_db", "clean_index")
+class TestDatasetCreationWorkflow:
+    @pytest.mark.ckan_config("ckan.auth.create_unowned_dataset", True)
+    def test_dataset_creation_workflow_index_properly(self, app):
+
+        sysadmin = factories.Sysadmin()
+        organization = factories.Organization()
+
+        url = tk.url_for("dataset.new")
+        extra_environ = {"REMOTE_USER": sysadmin["name"]}
+        app.post(
+            url,
+            extra_environ=extra_environ,
+            data={
+                "name": "testing-dataset-flow",
+                "owner_org": organization["id"],
+                "save": "",
+                "_ckan_phase": 1,
+            },
+            follow_redirects=False,
+        )
+
+        # Test we do not index draft package
+        assert helpers.call_action("package_search", q="*:*")["count"] == 0
+        # Test organization did not index package
+        result = helpers.call_action("organization_search", q="*:*")["results"][0]
+        assert result["package_count"] == 0
+
+        url = tk.url_for("resource.new", id="testing-dataset-flow")
+        app.post(
+            url,
+            extra_environ=extra_environ,
+            data={
+                "id": "",
+                "url": "http://example.com/resource",
+                "save": "go-metadata",
+            },
+        )
+
+        # Test package is indexed when active
+        result = helpers.call_action("package_search", q="*:*")["results"][0]
+        assert result["name"] == "testing-dataset-flow"
+        assert result["state"] == "active"
+        # Test organization indexed the new package
+        result = helpers.call_action("organization_search", q="*:*")["results"][0]
+        assert result["package_count"] == 1
