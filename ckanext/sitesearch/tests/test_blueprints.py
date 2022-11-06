@@ -45,11 +45,11 @@ class TestDatasetCreationWorkflow:
     @pytest.mark.ckan_config("ckan.auth.create_unowned_dataset", True)
     def test_dataset_creation_workflow_index_properly(self, app):
 
-        sysadmin = factories.Sysadmin()
+        sysadmin = factories.SysadminWithToken()
         organization = factories.Organization()
 
         url = tk.url_for("dataset.new")
-        extra_environ = {"REMOTE_USER": sysadmin["name"]}
+        extra_environ = {"Authorization": sysadmin["token"]}
         app.post(
             url,
             extra_environ=extra_environ,
