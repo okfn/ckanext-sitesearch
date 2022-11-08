@@ -7,7 +7,7 @@ from ckan.tests import factories, helpers
 
 
 def _get_extra_environ(user):
-    """ Returns an extra_environ dictionary
+    """Returns an extra_environ dictionary
 
     CKAN 2.10 deprecates REMOTE_USER as a valid
     environ variable in favor of an
@@ -23,7 +23,7 @@ def _get_extra_environ(user):
 
 
 def _get_sysadmin():
-    """ Returns a sysadmin user
+    """Returns a sysadmin user
 
     CKAN 2.10 requires an Authorization token to
     call app.post() method and exempt CSRF protection.
