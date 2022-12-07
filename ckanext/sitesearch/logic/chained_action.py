@@ -9,9 +9,10 @@ def package_create(up_func, context, data_dict):
 
     data_dict = up_func(context, data_dict)
 
-    owner_org = data_dict.get("owner_org", None)
-    if owner_org:
-        rebuild.rebuild_orgs(entity_id=owner_org)
+    if context.get('return_id_only', False) is False:
+        owner_org = data_dict.get("owner_org", None)
+        if owner_org:
+            rebuild.rebuild_orgs(entity_id=owner_org)
 
     return data_dict
 
