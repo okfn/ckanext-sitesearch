@@ -52,8 +52,9 @@ def package_update(up_func, context, data_dict):
 
     data_dict = up_func(context, data_dict)
 
-    _rebuild_org_if_org_changed(data_dict, organization)
-    _rebuild_org_if_pkg_state_changed(data_dict, state)
+    if context.get('return_id_only', False) is False:
+        _rebuild_org_if_org_changed(data_dict, organization)
+        _rebuild_org_if_pkg_state_changed(data_dict, state)
 
     return data_dict
 
@@ -90,7 +91,8 @@ def organization_create(up_func, context, data_dict):
 
     data_dict = up_func(context, data_dict)
 
-    index.index_organization(data_dict)
+    if context.get('return_id_only', False) is False:
+        index.index_organization(data_dict)
 
     return data_dict
 
@@ -120,7 +122,8 @@ def group_create(up_func, context, data_dict):
 
     data_dict = up_func(context, data_dict)
 
-    index.index_group(data_dict)
+    if context.get('return_id_only', False) is False:
+        index.index_group(data_dict)
 
     return data_dict
 
